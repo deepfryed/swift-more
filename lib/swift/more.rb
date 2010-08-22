@@ -10,15 +10,16 @@ module Swift
       (class << self; self end).send(:define_method, name, lambda{ attribute })
     end
 
-    def self.load *args
-      instance = super(*args)
-      instance.persisted = true
-      instance
+    def self.load tuple
+      scheme           = allocate
+      scheme.tuple     = tuple
+      scheme.persisted = true
+      scheme
     end
 
-    def self.create *args
-      res = super(*args)
-      args.length > 1 ? res : res.first
+    def self.create *options
+      res = Swift.db.create(self, *options)
+      options.length > 1 ? res : res.first
     end
 
     def save

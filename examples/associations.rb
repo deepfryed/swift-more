@@ -5,23 +5,23 @@ $:.unshift '../swift/lib'
 
 require 'pp'
 require 'swift'
+require 'swift/more'
 require 'swift/migrations'
-require 'swift/associations'
 
 class Publisher < Swift::Scheme
   store     :publishers
-  attribute :id,   Swift::Type::Integer, serial: true, key: true
-  attribute :name, Swift::Type::String
+  attribute :id,   Integer, serial: true, key: true
+  attribute :name, String
 
   has_many :books
 end
 
 class Book < Swift::Scheme
   store     :books
-  attribute :id,           Swift::Type::Integer, serial: true, key: true
-  attribute :author_id,    Swift::Type::Integer
-  attribute :publisher_id, Swift::Type::Integer
-  attribute :name,         Swift::Type::String
+  attribute :id,           Integer, serial: true, key: true
+  attribute :author_id,    Integer
+  attribute :publisher_id, Integer
+  attribute :name,         String
 
   belongs_to :publisher
   belongs_to :author
@@ -29,8 +29,8 @@ end
 
 class Author < Swift::Scheme
   store     :authors
-  attribute :id,   Swift::Type::Integer, serial: true, key: true
-  attribute :name, Swift::Type::String
+  attribute :id,   Integer, serial: true, key: true
+  attribute :name, String
 
   has_many :books
 end # User
@@ -56,7 +56,8 @@ author.books.create(name: 'A day in the life of Arthurtons')
 puts '', '-- fetch association --'
 pp author.books(':name like ?', '%life%').all
 
-publisher = Publisher.create(name: 'The Kaui Mai Press').first
+publisher = Publisher.create(name: 'The Kaui Mai Press')
+
 author.books.first.update(publisher_id: publisher.id)
 
 pp author.books.publishers.all
