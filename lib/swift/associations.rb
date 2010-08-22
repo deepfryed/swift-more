@@ -111,7 +111,7 @@ module Swift
           scheme  = HasOne.find_scheme(self, options.fetch(:scheme, accessor))
           args    = HasOne.parse_options(args)
           options = {source: source, target: scheme}.merge(options)
-          HasOne.new(options.merge(args)).load.first
+          HasOne.new(options.merge(args)).first
         end
         source.send(:define_singleton_method, Inflect.plural(accessor.to_s)) do |*args|
           scheme  = HasOne.find_scheme(self, options.fetch(:scheme, accessor))
@@ -138,7 +138,7 @@ module Swift
           scheme  = BelongsTo.find_scheme(self, options.fetch(:scheme, accessor))
           args    = BelongsTo.parse_options(args)
           options = {source: self, target: scheme}.merge(options)
-          BelongsTo.new(options.merge(args))
+          BelongsTo.new(options.merge(args)).first
         end
         source.send(:define_singleton_method, Inflect.plural(accessor.to_s)) do |*args|
           scheme  = BelongsTo.find_scheme(self, options.fetch(:scheme, accessor))
