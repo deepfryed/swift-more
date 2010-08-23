@@ -23,7 +23,7 @@ module Swift
     end
 
     def save
-      instance = persisted ? update.first : scheme.create(self).first
+      instance = persisted ? update.first : scheme.create(self)
       instance.persisted = true
       instance
     end
