@@ -61,6 +61,10 @@ module Swift
         self.load.to_a
       end
 
+      def each &block
+        self.load.each(&block)
+      end
+
       def first
         self.load.first
       end
