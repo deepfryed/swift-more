@@ -1,6 +1,19 @@
 require_relative 'inflect'
 require_relative 'associations/crud'
 
+# TODO find a better way to do this without mucking around in core.
+class Object
+  def const_get_relative name
+    klass = self
+    mods  = klass.to_s.split(/::/)
+    while mods.length > 0
+      mods.pop
+      return klass.const_get(name) if klass.const_defined?(name)
+      klass = klass.const_get(mods.join('::'))
+    end
+  end
+end
+
 module Swift
   module Associations
     class Relationship
@@ -36,9 +49,8 @@ module Swift
         if name.kind_of?(Class)
           name
         else
-          klass = klass.scheme if klass.kind_of?(Scheme)
           name  = Inflect.singular(name.to_s).sub(/^(.)/) { $1.upcase } unless name =~ /::/
-          name.split(/::/).inject(klass) {|a, v| a.const_get(v) } rescue nil
+          klass.const_get_relative(name)
         end
       end
 
@@ -91,7 +103,7 @@ module Swift
     class HasMany < Has
       def self.install source, accessor, options
         source.send(:define_method, accessor) do |*args|
-          scheme  = HasMany.find_scheme(self, options.fetch(:scheme, accessor))
+          scheme  = HasMany.find_scheme(source, options.fetch(:scheme, accessor))
           args    = HasMany.parse_options(args)
           options = {source: self, target: scheme}.merge(options)
           HasMany.new(options.merge(args))
@@ -108,7 +120,7 @@ module Swift
     class HasOne < Has
       def self.install source, accessor, options
         source.send(:define_method, accessor) do |*args|
-          scheme  = HasOne.find_scheme(self, options.fetch(:scheme, accessor))
+          scheme  = HasOne.find_scheme(source, options.fetch(:scheme, accessor))
           args    = HasOne.parse_options(args)
           options = {source: source, target: scheme}.merge(options)
           HasOne.new(options.merge(args)).first
@@ -135,7 +147,7 @@ module Swift
       end
       def self.install source, accessor, options
         source.send(:define_method, accessor) do |*args|
-          scheme  = BelongsTo.find_scheme(self, options.fetch(:scheme, accessor))
+          scheme  = BelongsTo.find_scheme(source, options.fetch(:scheme, accessor))
           args    = BelongsTo.parse_options(args)
           options = {source: self, target: scheme}.merge(options)
           BelongsTo.new(options.merge(args)).first
