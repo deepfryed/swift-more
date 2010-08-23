@@ -12,6 +12,9 @@ class Object
       klass = klass.const_get(mods.join('::'))
     end
   end
+  def const_get_recursive name
+    name.split(/::/).inject(self) {|a,v| a.const_get_relative(v) } rescue nil
+  end
 end
 
 module Swift
@@ -50,7 +53,7 @@ module Swift
           name
         else
           name  = Inflect.singular(name.to_s).sub(/^(.)/) { $1.upcase } unless name =~ /::/
-          klass.const_get_relative(name)
+          klass.const_get_recursive(name)
         end
       end
 
