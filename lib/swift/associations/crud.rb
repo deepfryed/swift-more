@@ -37,8 +37,9 @@ module Swift
           bind   = rel.bind
           clause = rel.conditions.map{|c| c.gsub(/:(\w+)/){ '%s.%s' % [ alias1, rel.target.send($1).field ] } }
           if rel.source.kind_of?(Scheme)
-            clause << '(%s)' % rel.source_keys.map{|k| '%s.%s = ?' % [alias2, k] }.join(' and ')
-            bind   += rel.source.tuple.values_at(*rel.source_keys)
+            keys   =  rel.source_scheme.header.keys
+            clause << '(%s)' % keys.map{|k| '%s.%s = ?' % [alias2, k] }.join(' and ')
+            bind   += rel.source.tuple.values_at(*keys)
           end
           [ clause.map{|c| '(%s)' % c}, bind ]
         end
