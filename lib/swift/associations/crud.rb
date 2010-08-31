@@ -55,6 +55,11 @@ module Swift
       prepare(scheme, sql).execute(*bind)
     end
 
+    def associations_fetch_first scheme, relationship
+      sql, bind = associations.all(relationship)
+      prepare(scheme, '%s limit 1' % sql).execute(*bind).first
+    end
+
     def associations_destroy scheme, relationship
       target = relationship.target
       if target.header.keys.length > 1

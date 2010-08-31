@@ -66,7 +66,7 @@ module Swift
       end
 
       def first
-        self.load.first
+        Swift.db.associations_fetch_first(target, self)
       end
 
       def create args={}
