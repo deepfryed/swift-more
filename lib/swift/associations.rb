@@ -21,7 +21,7 @@ module Swift
   module Associations
     class Relationship
       attr_accessor :source, :target, :source_keys, :target_keys, :chains
-      attr_reader   :source_scheme, :target_scheme, :conditions, :bind
+      attr_reader   :source_scheme, :target_scheme, :conditions, :bind, :ordering
 
       def initialize opts = {}
         @chains        = opts.fetch(:chains, [])
@@ -35,6 +35,7 @@ module Swift
         @conditions    = opts.fetch(:condition, [])
         @bind          = opts.fetch(:bind, [])
         @conditions    = [ conditions ] unless conditions.kind_of?(Array)
+        @ordering      = opts.fetch(:order, nil)
       end
 
       def load
@@ -84,7 +85,8 @@ module Swift
 
       module Chainable
         def method_missing name, *args
-          args << { chains: [ self ] + chains }
+          options = args.last.is_a?(Hash) ? args.pop : {}
+          args << { chains: [ self ] + chains }.merge(options)
           if target.respond_to?(name)
             target.send(name, *args)
           else

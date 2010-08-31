@@ -18,6 +18,11 @@ module Swift
           end
 
           sql += ' where %s' % where.join(' and ') unless where.empty?
+          if relationship.ordering
+            ordering = relationship.ordering.join(', ')
+            sql += ' order by %s' % ordering.gsub(/:(\w+)/){ 't1.%s' % relationship.target.send($1).field }
+          end
+
           [ sql, bind ]
         end
 
