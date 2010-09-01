@@ -23,19 +23,19 @@ module Swift
       attr_accessor :source, :target, :source_keys, :target_keys, :chains
       attr_reader   :source_scheme, :target_scheme, :conditions, :bind, :ordering
 
-      def initialize opts = {}
-        @chains        = opts.fetch(:chains, [])
-        @source        = opts[:source] or raise ArgumentError, '+source+ required'
-        @target        = opts[:target] or raise ArgumentError, '+target+ required'
+      def initialize options = {}
+        @chains        = options.fetch(:chains, [])
+        @source        = options[:source] or raise ArgumentError, '+source+ required'
+        @target        = options[:target] or raise ArgumentError, '+target+ required'
         @source_scheme = source.kind_of?(Scheme) ? source.scheme : source
         @target_scheme = target.kind_of?(Scheme) ? target.scheme : target
-        @source_keys   = opts[:source_keys]
-        @target_keys   = opts[:target_keys]
+        @source_keys   = options[:source_keys]
+        @target_keys   = options[:target_keys]
 
-        @conditions    = opts.fetch(:condition, [])
-        @bind          = opts.fetch(:bind, [])
+        @conditions    = options.fetch(:condition, [])
+        @bind          = options.fetch(:bind, [])
+        @ordering      = options.fetch(:order, nil)
         @conditions    = [ conditions ] unless conditions.kind_of?(Array)
-        @ordering      = opts.fetch(:order, nil)
       end
 
       def load
@@ -99,13 +99,13 @@ module Swift
     end # Relationship
 
     class Has < Relationship
-      def initialize opts = {}
-        source = opts[:source]
+      def initialize options = {}
+        source = options[:source]
         scheme = source.kind_of?(Scheme) ? source.scheme : source
         name   = Inflect.singular(scheme.store.to_s)
-        opts[:source_keys] ||= scheme.header.keys
-        opts[:target_keys] ||= scheme.header.keys.map {|k| '%s_%s' % [ name, k ] }
-        super(opts)
+        options[:source_keys] ||= scheme.header.keys
+        options[:target_keys] ||= scheme.header.keys.map {|k| '%s_%s' % [ name, k ] }
+        super(options)
       end
     end # Has
 
@@ -114,13 +114,13 @@ module Swift
         source.send(:define_method, accessor) do |*args|
           scheme  = HasMany.find_scheme(source, options.fetch(:scheme, accessor))
           args    = HasMany.parse_options(args)
-          options = {source: self, target: scheme}.merge(options)
+          options = options.merge(source: self, target: scheme)
           HasMany.new(options.merge(args))
         end
         source.send(:define_singleton_method, accessor) do |*args|
           scheme  = HasMany.find_scheme(self, options.fetch(:scheme, accessor))
           args    = HasMany.parse_options(args)
-          options = {source: source, target: scheme}.merge(options)
+          options = options.merge(source: source, target: scheme)
           HasMany.new(options.merge(args))
         end
       end
@@ -131,25 +131,25 @@ module Swift
         source.send(:define_method, accessor) do |*args|
           scheme  = HasOne.find_scheme(source, options.fetch(:scheme, accessor))
           args    = HasOne.parse_options(args)
-          options = {source: source, target: scheme}.merge(options)
+          options = options.merge(source: self, target: scheme)
           HasOne.new(options.merge(args)).first
         end
         source.send(:define_singleton_method, Inflect.plural(accessor.to_s)) do |*args|
           scheme  = HasOne.find_scheme(self, options.fetch(:scheme, accessor))
           args    = HasOne.parse_options(args)
-          options = {source: source, target: scheme}.merge(options)
+          options = options.merge(source: source, target: scheme)
           HasOne.new(options.merge(args))
         end
       end
     end # HasOne
 
     class BelongsTo < Relationship
-      def initialize opts = {}
-        target = opts[:target]
+      def initialize options = {}
+        target = options[:target]
         name   = Inflect.singular(target.store.to_s)
-        opts[:source_keys] ||= target.header.keys.map {|k| '%s_%s' % [ name, k ] }
-        opts[:target_keys] ||= target.header.keys
-        super(opts)
+        options[:source_keys] ||= target.header.keys.map {|k| '%s_%s' % [ name, k ] }
+        options[:target_keys] ||= target.header.keys
+        super(options)
       end
       def create args={}
         raise NoMethodError, 'undefined method create in %s' % self
@@ -158,13 +158,13 @@ module Swift
         source.send(:define_method, accessor) do |*args|
           scheme  = BelongsTo.find_scheme(source, options.fetch(:scheme, accessor))
           args    = BelongsTo.parse_options(args)
-          options = {source: self, target: scheme}.merge(options)
+          options = options.merge(source: self, target: scheme)
           BelongsTo.new(options.merge(args)).first
         end
         source.send(:define_singleton_method, Inflect.plural(accessor.to_s)) do |*args|
           scheme  = BelongsTo.find_scheme(self, options.fetch(:scheme, accessor))
           args    = BelongsTo.parse_options(args)
-          options = {source: source, target: scheme}.merge(options)
+          options = options.merge(source: source, target: scheme)
           BelongsTo.new(options.merge(args))
         end
       end
