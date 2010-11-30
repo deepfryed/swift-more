@@ -3,7 +3,7 @@ module Swift
     module Associations
       class SQL
         def all relationship
-          sql = 'select t1.* from %s' % join(relationship, 't1', 't2')
+          sql = 'select distinct t1.* from %s' % join(relationship, 't1', 't2')
           unless relationship.chains.empty?
             sql += ' join %s' % relationship.chains.map.with_index do |r, idx|
               join_with(r, 't%d' % (idx+2), 't%d' % (idx+3))
