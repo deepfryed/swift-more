@@ -24,7 +24,7 @@ module Swift
       include Enumerable
 
       attr_accessor :source, :target, :source_scheme, :source_keys, :target_keys
-      attr_accessor :chains, :conditions, :bind, :ordering, :replaced
+      attr_accessor :chains, :conditions, :bind, :ordering
 
       def initialize options
         name           = options.fetch :name
@@ -55,14 +55,11 @@ module Swift
       end
 
       def all
-        @collection ||= begin
-          source && source.kind_of?(Swift::Scheme) && !source.persisted ? [] : Swift.db.load(target, self).to_a
-        end
+        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : Swift.db.load(target, self).to_a
       end
 
       def << *list
-        all
-        list.each {|item| @collection << item }
+        all && list.each {|item| @collection << item }
       end
 
       def [] n
@@ -70,8 +67,7 @@ module Swift
       end
 
       def replace list
-        self.replaced = true
-        @collection   = list
+        @collection = list
       end
 
       def create attrs
@@ -81,14 +77,11 @@ module Swift
           chains.first.map do |source|
             target.create attrs.merge! Hash[target_keys.zip(source_keys.map{|name| source.send(name)})]
           end
-        else
-          raise ArgumentError, "Unable to create relation - no valid relation chain for #{target}"
         end
       end
 
       def reload
-        self.replaced = false
-        @collection   = nil
+        @collection = nil
         self
       end
 
@@ -182,9 +175,8 @@ module Swift
       end
 
       def replace list
-        self.replaced = true
-        @collection   = list
-        save # not really save the scheme but copy the fk info across.
+        @collection = list
+        save # just to copy the fk info across.
       end
 
       def save
