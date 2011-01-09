@@ -55,7 +55,9 @@ module Swift
       end
 
       def all
-        @collection ||= Swift.db.load(target, self).to_a
+        @collection ||= begin
+          source && source.kind_of?(Swift::Scheme) && !source.persisted ? [] : Swift.db.load(target, self).to_a
+        end
       end
 
       def << *list
@@ -140,8 +142,19 @@ module Swift
       def save
         (@collection || []).each do |item|
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
+          # in case the whole thing fails, we will roll back persisted and internal states.
+          persisted = item.persisted
           item.save
+          item.persisted = persisted
         end
+      end
+
+      def commit
+        (@collection || []).each {|item| item.send(:commit)}
+      end
+
+      def rollback
+        (@collection || []).each {|item| item.send(:rollback)}
       end
     end # HasMany
 
@@ -170,6 +183,12 @@ module Swift
         klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
           BelongsTo.uncached(self, name, args, options)
         end
+      end
+
+      def replace list
+        self.replaced = true
+        @collection   = list
+        save # not really save the scheme but copy the fk info across.
       end
 
       def save

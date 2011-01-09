@@ -77,4 +77,29 @@ describe 'has_many relation' do
     assert_equal 'book one - chapter 2', @author.books[0].chapters[1].name
     assert_equal 'book - chapter 1',     @author.books[1].chapters[0].name
   end
+
+  it 'should rollback changes if saving children fails' do
+    db = Swift.db
+    db.execute('drop table if exists books')
+    db.execute('create table books (id integer primary key, author_id integer, name text not null)')
+
+    author = Author.new(name: 'Kenny')
+    author.books << Book.new
+
+    assert_raises(SwiftRuntimeError) { author.save }
+    assert_equal true, author.new?
+    assert_equal true, author.books.first.new?
+
+    assert_equal nil,  author.id
+    assert_equal nil,  author.books.first.id
+
+    @author.books << Book.new
+    assert_equal false, @author.new?
+
+    assert_raises(SwiftRuntimeError) { @author.save }
+    assert_equal false, @author.new?
+    assert_equal true,  @author.books.first.new?
+    assert_equal 1,     @author.id
+    assert_equal nil,   @author.books.first.id
+  end
 end
