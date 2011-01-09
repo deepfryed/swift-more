@@ -93,13 +93,21 @@ describe 'has_many relation' do
     assert_equal nil,  author.id
     assert_equal nil,  author.books.first.id
 
+    # TODO we need to use swift/identity_map to allow appending created objects.
+    @author.books << Book.new(name: 'test')
+    @author.save
+
     @author.books << Book.new
     assert_equal false, @author.new?
 
     assert_raises(SwiftRuntimeError) { @author.save }
     assert_equal false, @author.new?
-    assert_equal true,  @author.books.first.new?
     assert_equal 1,     @author.id
-    assert_equal nil,   @author.books.first.id
+
+    assert_equal true,  @author.books[1].new?
+    assert_equal nil,   @author.books[1].id
+
+    assert_equal false, @author.books[0].new?
+    assert_equal 1,     @author.books[0].id
   end
 end
