@@ -76,12 +76,10 @@ module Swift
 
       def create attrs
         if source.kind_of?(Swift::Scheme)
-          attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
-          target.create(attrs)
+          target.create attrs.merge! Hash[target_keys.zip(source_keys.map{|name| source.send(name)})]
         elsif chains && chains.first
           chains.first.map do |source|
-            attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
-            target.create(attrs)
+            target.create attrs.merge! Hash[target_keys.zip(source_keys.map{|name| source.send(name)})]
           end
         else
           raise ArgumentError, "Unable to create relation - no valid relation chain for #{target}"
@@ -143,9 +141,7 @@ module Swift
         (@collection || []).each do |item|
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
           # in case the whole thing fails, we will roll back persisted and internal states.
-          persisted = item.persisted
-          item.save
-          item.persisted = persisted
+          item.persisted, discarded_value = item.persisted, item.save
         end
       end
 
