@@ -31,7 +31,7 @@ describe 'belongs_to relation' do
 
     [Author, Book, Chapter].each {|klass| Swift.db.migrate! klass}
 
-    @author = Author.create(name: 'Test User').first
+    @author = Author.create(name: 'Test User')
     @book   = @author.books.create(name: 'First Book')
   end
 

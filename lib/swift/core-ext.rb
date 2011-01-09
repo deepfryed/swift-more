@@ -25,6 +25,13 @@ module Swift
       scheme
     end
 
+    def self.create options = {}
+      if instance = Swift.db.create(self, options).first
+        instance.persisted = true
+        instance
+      end
+    end
+
     def new?
       !persisted
     end

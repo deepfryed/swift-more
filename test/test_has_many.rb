@@ -28,7 +28,7 @@ describe 'has_many relation' do
     end
 
     [Author, Book, Chapter].each {|klass| Swift.db.migrate! klass}
-    @author = Author.create(name: 'Test User').first
+    @author = Author.create(name: 'Test User')
   end
 
   it 'should respond_to has_many accessors' do

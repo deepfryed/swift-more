@@ -75,11 +75,11 @@ module Swift
       def create attrs
         if source.kind_of?(Swift::Scheme)
           attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
-          target.create(attrs).first
+          target.create(attrs)
         elsif chains && chains.first
           chains.first.map do |source|
             attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
-            target.create(attrs).first
+            target.create(attrs)
           end
         else
           raise ArgumentError, "Unable to create relation - no valid relation chain for #{target}"
