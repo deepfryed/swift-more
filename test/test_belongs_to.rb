@@ -51,4 +51,15 @@ describe 'belongs_to relation' do
     assert @author.books.chapters.create(name: 'first chapter')
     assert_equal 1, @author.books.chapters.reload.size
   end
+
+  it 'should chain relations' do
+    assert @author.books.create(name: 'book two').chapters.create(name: 'chapter one')
+    assert book = Book.first(':name = ?', 'book two')
+
+    assert_equal 'chapter one', book.chapters.first.name
+    assert_equal @author.name,  book.author.name
+    assert_equal 2,             book.author.books.size
+    assert_equal 0,             @book.chapters.size
+    assert_equal 1,             @book.author.books.chapters.size
+  end
 end

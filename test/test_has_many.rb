@@ -72,7 +72,9 @@ describe 'has_many relation' do
     assert @author.books.chapters.create(name: 'book - chapter 1') # chapter in both books.
     assert @author.books.first.chapters.create(name: 'book one - chapter 2') # chapter in 1st book'
 
-    assert_equal 3, @author.books.chapters.size
-    assert_equal 'book - chapter 1', @author.books.chapters.first.name
+    assert_equal 3,                      @author.books.chapters.size
+    assert_equal 'book - chapter 1',     @author.books[0].chapters[0].name
+    assert_equal 'book one - chapter 2', @author.books[0].chapters[1].name
+    assert_equal 'book - chapter 1',     @author.books[1].chapters[0].name
   end
 end
