@@ -1,30 +1,33 @@
 require_relative 'helper'
 
-class Chapter < Swift::Scheme
-  store     :chapters
-  attribute :id,      Integer, serial: true, key: true
-  attribute :book_id, Integer
-  attribute :name,    String
-end
-
-class Book < Swift::Scheme
-  store     :books
-  attribute :id,           Integer, serial: true, key: true
-  attribute :author_id,    Integer
-  attribute :name,         String
-  has_many  :chapters
-end
-
-class Author < Swift::Scheme
-  store     :authors
-  attribute :id,   Integer, serial: true, key: true
-  attribute :name, String
-  has_many  :books
-end
-
 describe 'has_many relation' do
   before do
-    Swift.migrate!
+    # testing hack
+    [:Chapter, :Book, :Author].each {|k| Object.send(:remove_const, k) if Object.const_defined?(k)}
+
+    Chapter = Class.new(Swift::Scheme) do
+      store     :chapters
+      attribute :id,      Integer, serial: true, key: true
+      attribute :book_id, Integer
+      attribute :name,    String
+    end
+
+    Book = Class.new(Swift::Scheme) do
+      store     :books
+      attribute :id,           Integer, serial: true, key: true
+      attribute :author_id,    Integer
+      attribute :name,         String
+      has_many  :chapters
+    end
+
+    Author = Class.new(Swift::Scheme) do
+      store     :authors
+      attribute :id,   Integer, serial: true, key: true
+      attribute :name, String
+      has_many  :books
+    end
+
+    [Author, Book, Chapter].each {|klass| Swift.db.migrate! klass}
     @author = Author.create(name: 'Test User').first
   end
 

@@ -129,11 +129,11 @@ module Swift
         klass.send(:define_method, name) do |*args|
           HasMany.cached(self, name, args, options)
         end
-        klass.send(:define_singleton_method, name) do |*args|
-          HasMany.uncached(self, name, args, options)
-        end
         klass.send(:define_method, "#{name}=") do |list|
           self.send(:_hasmany_cached)[name].replace(list)
+        end
+        klass.send(:define_singleton_method, name) do |*args|
+          HasMany.uncached(self, name, args, options)
         end
       end
 
@@ -164,11 +164,11 @@ module Swift
         klass.send(:define_method, name) do |*args|
           BelongsTo.cached(self, name, args, options).first
         end
-        klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
-          BelongsTo.uncached(self, name, args, options).first
-        end
         klass.send(:define_method, "#{name}=") do |list|
           self.send(:_belongsto_cached)[name].replace([list])
+        end
+        klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
+          BelongsTo.uncached(self, name, args, options)
         end
       end
 
@@ -192,11 +192,11 @@ module Swift
         klass.send(:define_method, name) do |*args|
           HasOne.cached(self, name, args, options).first
         end
-        klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
-          HasOne.uncached(self, name, args, options).first
-        end
         klass.send(:define_method, "#{name}=") do |list|
           self.send(:_hasone_cached)[name].replace([list])
+        end
+        klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
+          HasOne.uncached(self, name, args, options)
         end
       end
     end # HasOne
