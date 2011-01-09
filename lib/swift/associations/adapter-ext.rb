@@ -18,7 +18,7 @@ module Swift
           end
 
           sql += ' where %s' % where.join(' and ') unless where.empty?
-          if relationship.ordering
+          unless relationship.ordering.empty?
             ordering = relationship.ordering.join(', ')
             sql += ' order by %s' % ordering.gsub(/:(\w+)/){ 't1.%s' % relationship.target.send($1).field }
           end
@@ -29,7 +29,7 @@ module Swift
         def join rel, alias1, alias2
           condition = rel.target_keys.zip(rel.source_keys)
           condition = condition.map {|t,s| '%s.%s = %s.%s' % [alias1, t, alias2, s] }.join(' and ')
-          '%s %s join %s %s on (%s)' % [ rel.target_scheme.store, alias1, rel.source_scheme.store, alias2, condition ]
+          '%s %s join %s %s on (%s)' % [ rel.target.store, alias1, rel.source_scheme.store, alias2, condition ]
         end
 
         def join_with rel, alias1, alias2
@@ -55,20 +55,15 @@ module Swift
       @associations ||= Associations::SQL.new
     end
 
-    def associations_fetch scheme, relationship
+    def load scheme, relationship, extra = ''
       sql, bind = associations.all(relationship)
-      prepare(scheme, sql).execute(*bind)
+      prepare(scheme, sql + extra).execute(*bind)
     end
 
-    def associations_fetch_first scheme, relationship
-      sql, bind = associations.all(relationship)
-      prepare(scheme, '%s limit 1' % sql).execute(*bind).first
-    end
-
-    def associations_destroy scheme, relationship
+    def destroy scheme, relationship
       target = relationship.target
       if target.header.keys.length > 1
-        assocations_fetch(scheme, relationship).each {|r| r.destroy }
+        self.load(scheme, relationship).map(&:destroy)
       else
         key = target.header.keys.first
         sql, bind = associations.all(relationship)
