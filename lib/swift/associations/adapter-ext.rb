@@ -55,15 +55,15 @@ module Swift
       @associations ||= Associations::SQL.new
     end
 
-    def load scheme, relationship, extra = ''
+    def load_through scheme, relationship, extra = ''
       sql, bind = associations.all(relationship)
       prepare(scheme, sql + extra).execute(*bind)
     end
 
-    def destroy scheme, relationship
+    def destroy_through scheme, relationship
       target = relationship.target
       if target.header.keys.length > 1
-        self.load(scheme, relationship).map(&:destroy)
+        self.load_through(scheme, relationship).map(&:destroy)
       else
         key = target.header.keys.first
         sql, bind = associations.all(relationship)

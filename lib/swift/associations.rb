@@ -55,7 +55,7 @@ module Swift
       end
 
       def all
-        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : Swift.db.load(target, self).to_a
+        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : Swift.db.load_through(target, self).to_a
       end
 
       def << *list
@@ -67,7 +67,7 @@ module Swift
       end
 
       def replace list
-        @collection = list
+        @collection = list.flatten.reject(&:nil?).uniq
       end
 
       def create attrs
@@ -104,6 +104,8 @@ module Swift
     end # Base
 
     class HasMany < Base
+      attr_accessor :old
+
       def initialize options
         super(options)
         @source_keys = options.fetch :source_keys, [:id]
@@ -123,7 +125,7 @@ module Swift
           HasMany.cached(self, name, args, options)
         end
         klass.send(:define_method, "#{name}=") do |list|
-          self.send(:_hasmany_cached)[name].replace(list)
+          HasMany.cached(self, name, [], options).replace(list)
         end
         klass.send(:define_singleton_method, name) do |*args|
           HasMany.uncached(self, name, args, options)
@@ -131,6 +133,7 @@ module Swift
       end
 
       def save
+        old.each(&:destroy) if old && !old.empty?
         (@collection || []).each do |item|
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
           # in case the whole thing fails, we will roll back persisted and internal states.
@@ -138,7 +141,14 @@ module Swift
         end
       end
 
+      def replace list
+        reload
+        self.old = all
+        super
+      end
+
       def commit
+        self.old = nil
         (@collection || []).each {|item| item.send(:commit)}
       end
 
@@ -167,7 +177,7 @@ module Swift
           BelongsTo.cached(self, name, args, options).first
         end
         klass.send(:define_method, "#{name}=") do |list|
-          self.send(:_belongsto_cached)[name].replace([list])
+          BelongsTo.cached(self, name, [], options).replace([list])
         end
         klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
           BelongsTo.uncached(self, name, args, options)
@@ -175,13 +185,15 @@ module Swift
       end
 
       def replace list
-        @collection = list
-        save # just to copy the fk info across.
+        super
+        save
       end
 
       def save
-        (@collection || []).each do |item|
-          target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", target.send(t))}
+        if item = @collection.first
+          target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", item.send(t))}
+        else
+          target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", nil)}
         end
       end
     end # BelongsTo
@@ -200,7 +212,7 @@ module Swift
           HasOne.cached(self, name, args, options).first
         end
         klass.send(:define_method, "#{name}=") do |list|
-          self.send(:_hasone_cached)[name].replace([list])
+          HasOne.cached(self, name, [], options).replace([list])
         end
         klass.send(:define_singleton_method, Inflect.plural(name.to_s)) do |*args|
           HasOne.uncached(self, name, args, options)

@@ -110,4 +110,17 @@ describe 'has_many relation' do
     assert_equal false, @author.books[0].new?
     assert_equal 1,     @author.books[0].id
   end
+
+  it 'should replace collection with new one using =' do
+    assert @author.books.create(name: 'book 1')
+
+    assert_equal 1,        @author.books.reload.size
+    assert_equal 'book 1', @author.books.first.name
+
+    @author.books = [ Book.new(name: 'book 2') ]
+    @author.save
+
+    assert_equal 1,        @author.books.reload.size
+    assert_equal 'book 2', @author.books.first.name
+  end
 end

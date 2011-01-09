@@ -62,4 +62,9 @@ describe 'belongs_to relation' do
     assert_equal 0,             @book.chapters.size
     assert_equal 1,             @book.author.books.chapters.size
   end
+
+  it 'should assign foreign key id via mutator' do
+    assert book = Book.create(name: 'test', author: @author)
+    assert_equal @author.id, book.author_id
+  end
 end
