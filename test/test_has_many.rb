@@ -2,8 +2,9 @@ require_relative 'helper'
 
 class Chapter < Swift::Scheme
   store     :chapters
-  attribute :id,   Integer, serial: true, key: true
-  attribute :name, String
+  attribute :id,      Integer, serial: true, key: true
+  attribute :book_id, Integer
+  attribute :name,    String
 end
 
 class Book < Swift::Scheme
@@ -60,5 +61,15 @@ describe 'has_many relation' do
     assert_equal 2, @author.books.reload.size
     assert_equal @author.id, @author.books[0].author_id
     assert_equal @author.id, @author.books[1].author_id
+  end
+
+  it 'should chain relations' do
+    assert @author.books.create(name: 'book one')
+    assert @author.books.create(name: 'book two')
+    assert @author.books.chapters.create(name: 'book - chapter 1') # chapter in both books.
+    assert @author.books.first.chapters.create(name: 'book one - chapter 2') # chapter in 1st book'
+
+    assert_equal 3, @author.books.chapters.size
+    assert_equal 'book - chapter 1', @author.books.chapters.first.name
   end
 end

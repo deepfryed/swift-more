@@ -16,7 +16,7 @@ module Swift
       def method_missing name, *args
         if target.respond_to?(name)
           options = args.last.is_a?(Hash) ? args.pop : {}
-          target.send(name, *args.push(options.merge(chains: chains.unshift(self))))
+          target.send(name, *args.push(options.merge(chains: chains ? chains.unshift(self) : [self])))
         else
           super
         end
@@ -40,7 +40,7 @@ module Swift
         @target or raise ArgumentError, "Unable to deduce class name for relation :#{name}, provide :target"
 
         # optional stuff
-        @chains     = options.fetch :chains,     []
+        @chains     = options.fetch :chains,     nil
         @conditions = options.fetch :conditions, []
         @bind       = options.fetch :bind,       []
         @ordering   = options.fetch :ordering,   []
@@ -77,8 +77,17 @@ module Swift
       end
 
       def create attrs
-        attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
-        target.create(attrs).first
+        if source.kind_of?(Swift::Scheme)
+          attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
+          target.create(attrs).first
+        elsif chains && chains.first
+          chains.first.map do |source|
+            attrs.merge! Hash[*target_keys.zip(source_keys.map{|name| source.send(name)}).flatten(1)]
+            target.create(attrs).first
+          end
+        else
+          raise ArgumentError, "Unable to create relation - no valid relation chain for #{target}"
+        end
       end
 
       def reload

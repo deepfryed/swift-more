@@ -4,14 +4,14 @@ module Swift
       class SQL
         def all relationship
           sql = 'select distinct t1.* from %s' % join(relationship, 't1', 't2')
-          unless relationship.chains.empty?
+          if relationship.chains
             sql += ' join %s' % relationship.chains.map.with_index do |r, idx|
               join_with(r, 't%d' % (idx+2), 't%d' % (idx+3))
             end.join(' join ')
           end
 
           where, bind = conditions(relationship, 't1', 't2')
-          relationship.chains.each_with_index do |r, idx|
+          (relationship.chains || []).each_with_index do |r, idx|
             w, b  = conditions(r, 't%d' % (idx+2), 't%d' % (idx+3))
             where += w
             bind  += b
