@@ -1,7 +1,3 @@
-require_relative 'inflect'
-require_relative 'core-ext'
-require_relative 'associations/adapter-ext'
-
 module Swift
   module Associations
     def has_many name, options={}

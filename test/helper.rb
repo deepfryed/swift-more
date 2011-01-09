@@ -4,8 +4,8 @@ require 'minitest/spec'
 require 'minitest/unit'
 
 require 'swift'
-require 'swift/associations'
 require 'swift/migrations'
+require 'swift/more'
 
 Swift.setup :default, Swift::DB::Sqlite3, db: ':memory:'
 MiniTest::Unit.autorun

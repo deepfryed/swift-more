@@ -1,0 +1,5 @@
+require 'swift'
+require_relative 'inflect'
+require_relative 'core-ext'
+require_relative 'associations'
+require_relative 'associations/adapter-ext'

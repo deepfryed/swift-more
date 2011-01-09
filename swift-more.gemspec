@@ -1,20 +1,18 @@
 Gem::Specification.new do |s|
-  s.name = %q{swift-more}
-  s.version = '0.1.2'
+  s.name                      = 'swift-more'
+  s.version                   = '0.2.0'
+  s.rubygems_version          = '1.3.7'
+  s.authors                   = ['Bharanee Rathna']
+  s.email                     = ['deepfryed@gmail.com']
+  s.summary                   = 'Swift ORM extensions.'
+  s.description               = 'Swift ORM extensions - light weight associations.'
+  s.homepage                  = 'http://github.com/deepfryed/swift-more'
+  s.date                      = '2011-01-09'
+  s.require_paths             = %w(lib)
+  s.files                     = Dir.glob(File.dirname(__FILE__) + '/lib/**/*.rb')
+  s.required_rubygems_version = Gem::Requirement.new('>= 1.3.6')
 
-  s.required_rubygems_version = Gem::Requirement.new('>= 0') if s.respond_to? :required_rubygems_version=
-  s.authors = ['Bharanee Rathna']
-  s.date = %q{2010-08-23}
-  s.description = %q{Swift experimental extensions.}
-  s.email = ['deepfryed@gmail.com']
-  s.files = [
-     'lib/swift/more.rb',
-     'lib/swift/inflect.rb',
-     'lib/swift/associations.rb',
-     'lib/swift/associations/crud.rb',
-     'swift-more.gemspec'
-  ]
-  s.require_paths = ['lib']
-  s.rubygems_version = %q{1.3.6}
-  s.summary = %q{Swift experimental extensions.}
+  s.add_dependency             'swift',    ['~> 0.8.0']
+  s.add_development_dependency 'swift',    ['~> 0.8.0']
+  s.add_development_dependency 'minitest', ['~> 2.0.1']
 end
