@@ -60,4 +60,8 @@ describe 'aggregate helpers' do
     assert_equal expect, @author.books.chapters.count('chapters')
                                       .execute(grouping: %w(book_id), having: 'chapters > 1').to_a
   end
+
+  it 'should allow chaining' do
+    assert_equal [1,2], @author.books.max(:id).min(:id).execute.values_at(:min_id, :max_id)
+  end
 end
