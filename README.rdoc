@@ -78,6 +78,11 @@ Experimental extensions to {Swift ORM}[https://github.com/shanna/swift].
     pp book.author.books.max(:id).min(:id).execute #=> {max_id: 3, min_id: 1}
     pp author.books.count.execute #=> {count: 3}
 
+    # Scheme#all does not allow relation chaining
+    pp Author.all(':name like ?', 'Dale%').map(&:name)
+
+    # Scheme#only allows relation chaining
+    pp Author.only(':name like ?', 'Dale%').books.map(&:name)
 
 == Contributing
 

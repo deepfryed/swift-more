@@ -32,7 +32,7 @@ class Author < Swift::Scheme
 end
 
 Swift.migrate!
-Swift.trace false # swift to true if you want to see the SQL as they get executed.
+Swift.trace true # set to false if you dont want to see the SQL as they get executed.
 
 author = Author.create(name: 'Dale Arthurton')
 
@@ -65,3 +65,10 @@ pp author.books(':id in (1,2)').chapters.map(&:name).uniq  #-> ['The first chapt
 # aggregates - have a look at test/test_aggregates.rb
 pp book.author.books.max(:id).min(:id).execute #=> {max_id: 3, min_id: 1}
 pp author.books.count.execute #=> {count: 3}
+
+
+# Scheme#all does not allow relation chaining
+pp Author.all(':name like ?', 'Dale%').map(&:name)
+
+# Scheme#only allows relation chaining
+pp Author.only(':name like ?', 'Dale%').books.map(&:name)

@@ -5,9 +5,12 @@ module Swift
         def all relationship
           sql = 'select distinct t1.* from %s' % join(relationship, 't1', 't2')
           if relationship.chains
-            sql += ' join %s' % relationship.chains.map.with_index do |r, idx|
-              join_with(r, 't%d' % (idx+2), 't%d' % (idx+3))
-            end.join(' join ')
+
+            chains = relationship.chains.map.with_index do |r, idx|
+              r.source == r.target ? nil : join_with(r, 't%d' % (idx+2), 't%d' % (idx+3))
+            end.reject(&:nil?).join(' join ')
+
+            sql += ' join %s' % chains unless chains.empty?
           end
 
           where, bind = conditions(relationship, 't1', 't2')
@@ -27,9 +30,13 @@ module Swift
         end
 
         def join rel, alias1, alias2
-          condition = rel.target_keys.zip(rel.source_keys)
-          condition = condition.map {|t,s| '%s.%s = %s.%s' % [alias1, t, alias2, s] }.join(' and ')
-          '%s %s join %s %s on (%s)' % [ rel.target.store, alias1, rel.source_scheme.store, alias2, condition ]
+          if rel.source == rel.target
+            '%s %s' % [ rel.source.store, alias1 ]
+          else
+            condition = rel.target_keys.zip(rel.source_keys)
+            condition = condition.map {|t,s| '%s.%s = %s.%s' % [alias1, t, alias2, s] }.join(' and ')
+            '%s %s join %s %s on (%s)' % [ rel.target.store, alias1, rel.source_scheme.store, alias2, condition ]
+          end
         end
 
         def join_with rel, alias1, alias2

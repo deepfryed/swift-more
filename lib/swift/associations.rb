@@ -98,7 +98,7 @@ module Swift
       end
 
       def self.uncached source, name, args, options
-        options.merge! source: source
+        options = options.merge source: source
         custom = args.last.kind_of?(Hash) ? args.pop.merge(options) : options
         custom.merge!(conditions: [args.shift], bind: args) if args.first
         new(custom)
@@ -219,5 +219,10 @@ module Swift
 
   class Scheme
     extend Associations
+
+    # TODO find a better name, though i don't want to mix #all and #only
+    def self.only *args
+      Associations::HasMany.uncached(self, nil, args, {target: self, name: nil})
+    end
   end # Scheme
 end #Swift
