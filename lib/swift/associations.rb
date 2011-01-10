@@ -104,6 +104,10 @@ module Swift
         new(custom)
       end
 
+      def self.cache_label
+        @cache_label ||= '_%s_cached' % self.to_s.split(/::/).last.downcase
+      end
+
       def save; end
     end # Base
 
@@ -116,13 +120,9 @@ module Swift
         @target_keys = options.fetch :target_keys, [source_scheme.to_s.split(/::/).last.downcase + '_id']
       end
 
-      def self.cache_label
-        '_hasmany_cached'
-      end
-
       def self.install klass, options
         name = options.fetch(:name)
-        klass.send(:define_method, '_hasmany_cached') do
+        klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasmany]
         end
         klass.send(:define_method, name) do |*args|
@@ -168,13 +168,9 @@ module Swift
         @source_keys = options.fetch :source_keys, [target.to_s.split(/::/).last.downcase + '_id']
       end
 
-      def self.cache_label
-        '_belongsto_cached'
-      end
-
       def self.install klass, options
         name = options.fetch(:name)
-        klass.send(:define_method, '_belongsto_cached') do
+        klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:belongsto]
         end
         klass.send(:define_method, name) do |*args|
@@ -203,13 +199,9 @@ module Swift
     end # BelongsTo
 
     class HasOne < HasMany
-      def self.cache_label
-        '_hasone_cached'
-      end
-
       def self.install klass, options
         name = options.fetch(:name)
-        klass.send(:define_method, '_hasone_cached') do
+        klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasone]
         end
         klass.send(:define_method, name) do |*args|
