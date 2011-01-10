@@ -12,13 +12,15 @@ module Swift
         @chain << op
       end
 
+      def alias verb, expr
+        "#{verb}_#{expr}".downcase.gsub(/[^a-zA-Z]/, '_').gsub(/_+/, '_').sub(/^_|_$/, '')
+      end
+
       def execute options={}
         aggr = []
         grouping, having = options.values_at(:grouping, :having)
         chain.each do |verb, expr, result_alias|
-          result_alias ||= [verb, expr].map do |value|
-            value.to_s.downcase.gsub(/[^a-zA-Z]/, '_').gsub(/_+/, '_')
-          end.join('_').gsub(/_+/, '_')
+          result_alias ||= self.alias(verb, expr)
           case verb
             when :max   then aggr << "max(#{expr}) as #{result_alias}"
             when :min   then aggr << "min(#{expr}) as #{result_alias}"

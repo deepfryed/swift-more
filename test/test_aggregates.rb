@@ -41,7 +41,7 @@ describe 'aggregate helpers' do
 
   it 'should count' do
     assert_equal 2, @author.books.count('books').execute[:books]
-    assert_equal 1, @author.books(':name like ?', '%2').count('books').execute[:books]
+    assert_equal 1, @author.books(':name like ?', '%2').count.execute[:count]
   end
 
   it 'should min, max and sum' do
@@ -51,17 +51,17 @@ describe 'aggregate helpers' do
   end
 
   it 'should group by etc.' do
-    expect = [{chapters: 1, book_id: 1}, {chapters: 2, book_id: 2}]
-    assert_equal expect, @author.books.chapters.count('chapters').execute(grouping: %w(book_id)).to_a
+    expect = [{count: 1, book_id: 1}, {count: 2, book_id: 2}]
+    assert_equal expect, @author.books.chapters.count.execute(grouping: %w(book_id)).to_a
   end
 
   it 'should filter by having' do
     expect = [{chapters: 2, book_id: 2}]
-    assert_equal expect, @author.books.chapters.count('chapters')
+    assert_equal expect, @author.books.chapters.count('chapters') # alias
                                       .execute(grouping: %w(book_id), having: 'chapters > 1').to_a
   end
 
   it 'should allow chaining' do
-    assert_equal [1,2], @author.books.max(:id).min(:id).execute.values_at(:min_id, :max_id)
+    assert_equal [1,2], @author.books.max(:id, 'max').min(:id, 'min').execute.values_at(:min, :max)
   end
 end
