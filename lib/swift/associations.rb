@@ -66,6 +66,10 @@ module Swift
         all[n]
       end
 
+      def last
+        all.last
+      end
+
       def replace list
         @collection = list.flatten.reject(&:nil?).uniq
       end
