@@ -60,3 +60,8 @@ pp book.author.name         #-> 'Dale Arthurton
 pp book.author.books.size   #-> 3
 
 pp author.books(':id in (1,2)').chapters.map(&:name).uniq  #-> ['The first chapter']
+
+
+# aggregates - have a look at test/test_aggregates.rb
+pp book.author.books.max(:id).min(:id).execute #=> {max_id: 3, min_id: 1}
+pp author.books.count.execute #=> {count: 3}
