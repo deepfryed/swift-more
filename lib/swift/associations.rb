@@ -30,7 +30,7 @@ module Swift
         name           = options.fetch :name
         @source        = options.fetch :source
         @source_scheme = source.is_a?(Class) && source || source.class
-        @target        = options.fetch :target, name_to_class(name)
+        @target        = name_to_class(options.fetch :target, name)
 
         @source or raise ArgumentError, '+source+ required'
         @target or raise ArgumentError, "Unable to deduce class name for relation :#{name}, provide :target"
@@ -43,7 +43,7 @@ module Swift
       end
 
       def name_to_class name
-        source_scheme.const_get_recursive(Inflect.singular(name.to_s).capitalize)
+        name.kind_of?(Swift::Scheme) ? name : source_scheme.const_get_recursive(Inflect.singular(name.to_s).capitalize)
       end
 
       def size
