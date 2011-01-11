@@ -44,3 +44,6 @@ p book.stores.reload.first.name #=> 'store 1'
 
 book = Book.create(name: 'another test book', stores: book.stores.all)
 p book.stores.reload.first.name #=> 'store 1'
+
+book = Book.create(name: 'third book', stores: [Store.new(name: 'store 2')])
+p book.stores.reload.first.name #=> 'store 2'

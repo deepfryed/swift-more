@@ -36,7 +36,7 @@ Swift.trace true # set to false if you dont want to see the SQL as they get exec
 
 author = Author.create(name: 'Dale Arthurton')
 
-# creation via relationship
+# creation via associations
 author.books.create(name: "Dale's first book")
 
 # appending children and saving parent
@@ -50,7 +50,7 @@ author.books.chapters.create(name: 'The first chapter')
 pp author.books.chapters.size        #-> 0
 pp author.books.chapters.reload.size #-> 2
 
-# chain relations
+# chain associations
 author.books.create(name: 'The third book').chapters.create(name: 'chapter one')
 
 book = author.books.reload[2]
@@ -67,8 +67,6 @@ pp book.author.books.max(:id).min(:id).execute #=> {max_id: 3, min_id: 1}
 pp author.books.count.execute #=> {count: 3}
 
 
-# Scheme#all does not allow relation chaining
+# Scheme#all is lazy
 pp Author.all(':name like ?', 'Dale%').map(&:name)
-
-# Scheme#only allows relation chaining
-pp Author.only(':name like ?', 'Dale%').books.map(&:name)
+pp Author.all(':name like ?', 'Dale%').books.map(&:name)

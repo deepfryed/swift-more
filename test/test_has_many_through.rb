@@ -58,6 +58,6 @@ describe 'has_many through relation' do
   it 'should create child objects via #create' do
     book = Book.create(name: 'sample book', stores: [Store.new(name: 'sample store')])
     assert book.persisted
-    assert_equal 'sample store', Book.only(':name = ?', 'sample book').stores.first.name
+    assert_equal 'sample store', Book.all(':name = ?', 'sample book').stores.first.name
   end
 end

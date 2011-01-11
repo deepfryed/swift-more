@@ -123,4 +123,10 @@ describe 'has_many relation' do
     assert_equal 1,        @author.books.reload.size
     assert_equal 'book 2', @author.books.first.name
   end
+
+  it 'should lazy execute #all' do
+    assert_kind_of Swift::Scheme::LazyAll, Author.all
+    assert_equal   1, Author.all.rows
+    assert_equal   0, Author.all(':name = ?', @author.name).books.size
+  end
 end

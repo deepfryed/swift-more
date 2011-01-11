@@ -131,7 +131,20 @@ module Swift
         @cache_label ||= '_%s_cached' % self.to_s.split(/::/).last.downcase
       end
 
-      def save; end
+      def self.get_association_index klass
+        klass.class_variable_defined?(:@@association_index) ? klass.class_variable_get(:@@association_index) : {}
+      end
+
+      def self.set_association_index klass, value
+        klass.class_variable_set(:@@association_index, value)
+      end
+
+      def self.add_association klass, type, name
+        __assoc__ = self
+        index     = get_association_index(klass)
+        (index[type] ||= {})[name] = lambda {__assoc__.new(source: klass, name: name).target}
+        set_association_index(klass, index)
+      end
     end # Base
 
     class HasMany < Base
@@ -145,6 +158,8 @@ module Swift
 
       def self.install klass, options
         name = options.fetch(:name)
+        add_association(klass, :hasmany, name)
+
         klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasmany]
         end
@@ -165,7 +180,7 @@ module Swift
 
       # TODO very slow, speed it up.
       def save_through
-        rel = target.class_variable_get(:@@belongsto) || {}
+        rel = self.class.get_association_index(target)[:belongsto] || {}
         fn1 = rel.find {|k,v| v.call == self.source_scheme}[0]
         fn2 = (rel.keys - [fn1])[0]
         (@collection || []).each {|item| target.new(fn1 => source, fn2 => item).save}
@@ -205,11 +220,8 @@ module Swift
       end
 
       def self.install klass, options
-        name       = options.fetch(:name)
-        keys       = klass.class_variable_defined?(:@@belongsto) ? klass.class_variable_get(:@@belongsto) : {}
-        keys[name] = lambda {BelongsTo.new(source: klass, name: name).target}
-
-        klass.class_variable_set(:@@belongsto, keys)
+        name = options.fetch(:name)
+        add_association(klass, :belongsto, name)
 
         klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:belongsto]
@@ -243,6 +255,8 @@ module Swift
     class HasOne < HasMany
       def self.install klass, options
         name = options.fetch(:name)
+        add_association(klass, :hasone, name)
+
         klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasone]
         end
@@ -262,9 +276,35 @@ module Swift
   class Scheme
     extend Associations
 
-    # TODO find a better name, though i don't want to mix #all and #only
-    def self.only *args
-      Associations::HasMany.uncached(self, nil, args, {target: self, name: nil})
+    class LazyAll
+      def self.new scheme, args, &block
+        if block_given?
+          Swift.db.all(scheme, *args, &block)
+        else
+          instance = allocate
+          instance.setup(scheme, args)
+          instance
+        end
+      end
+
+      def setup scheme, args
+        @scheme, @args = scheme, args
+        @index = Associations::Base.get_association_index(scheme).map do |type, hash|
+          hash.keys.map{|name| name.to_sym}
+        end.flatten
+      end
+
+      def method_missing name, *args, &block
+        if @index.include?(name)
+          Associations::HasMany.uncached(@scheme, nil, @args, {target: @scheme, name: nil}).send(name, *args)
+        else
+          Swift.db.all(@scheme, *@args).send(name, *args, &block)
+        end
+      end
+    end # LazyAll
+
+    def self.all *args, &block
+      LazyAll.new(self, args, &block)
     end
   end # Scheme
 end #Swift
