@@ -43,7 +43,8 @@ module Swift
       end
 
       def name_to_class name
-        name.kind_of?(Swift::Scheme) ? name : source_scheme.const_get_recursive(Inflect.singular(name.to_s).capitalize)
+        klass = name.kind_of?(Class) && name || name.class
+        klass < Swift::Scheme ? klass : source_scheme.const_get_recursive(Inflect.singular(name.to_s).capitalize)
       end
 
       def size
