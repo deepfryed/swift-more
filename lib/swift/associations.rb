@@ -188,11 +188,11 @@ module Swift
 
       def commit
         self.old = nil
-        (@collection || []).each {|item| item.commit}
+        (@collection || []).each {|item| item.send(:commit)}
       end
 
       def rollback
-        (@collection || []).each {|item| item.rollback}
+        (@collection || []).each {|item| item.send(:rollback)}
       end
     end # HasMany
 
