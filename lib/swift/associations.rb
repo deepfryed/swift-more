@@ -174,6 +174,7 @@ module Swift
       def save_collection
         old.each(&:destroy) if old && !old.empty?
         (@collection || []).each do |item|
+          next if item.visited
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
           # in case the whole thing fails, we will roll back persisted and internal states.
           item.persisted, discarded_value = item.persisted, item.save
@@ -231,7 +232,7 @@ module Swift
 
       def save
         if item = @collection.first
-          item.save if item.new?
+          item.save if item.new? && !item.visited
           target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", item.send(t))}
         else
           target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", nil)}

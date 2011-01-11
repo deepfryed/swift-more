@@ -1,6 +1,6 @@
 module Swift
   class Scheme
-    attr_accessor :persisted
+    attr_accessor :persisted, :visited
 
     # TODO wrappers for load & create ?
     def self.load tuple
@@ -11,7 +11,7 @@ module Swift
     end
 
     def self.create options = {}
-      if options.find {|k,v| v.kind_of?(Scheme)}
+      if options.find {|k,v| v.kind_of?(Scheme) || v.kind_of?(Array)}
         instance = new(options)
         instance.save
         instance
@@ -31,6 +31,7 @@ module Swift
         Swift.db.transaction do |db|
           (cache[:belongsto] || {}).each {|name, rel| rel.save}
           new? && db.create(scheme, self) || self.update
+          self.visited = true
           (cache[:hasmany] || {}).each {|name, rel| rel.save}
           (cache[:hasone]  || {}).each {|name, rel| rel.save}
         end
@@ -39,6 +40,7 @@ module Swift
         rollback
         raise error
       end
+      self
     end
 
     # TODO commit and rollback terminology here might be confusing since its
@@ -48,6 +50,7 @@ module Swift
       (cache[:hasmany] || {}).each {|name, rel| rel.commit}
       (cache[:hasone]  || {}).each {|name, rel| rel.commit}
       self.persisted = true
+      self.visited   = false
     end
 
     def rollback
@@ -55,6 +58,7 @@ module Swift
       self.send("#{scheme.header.serial}=", nil) if new? && scheme.header.serial
       (cache[:hasmany] || {}).each {|name, rel| rel.rollback}
       (cache[:hasone]  || {}).each {|name, rel| rel.rollback}
+      self.visited   = false
     end
   end
 end

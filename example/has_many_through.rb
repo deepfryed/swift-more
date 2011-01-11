@@ -41,3 +41,6 @@ book = Book.create(name: 'test book')
 book.stores << Store.new(name: 'store 1')
 book.save
 p book.stores.reload.first.name #=> 'store 1'
+
+book = Book.create(name: 'another test book', stores: book.stores.all)
+p book.stores.reload.first.name #=> 'store 1'

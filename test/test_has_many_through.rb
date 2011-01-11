@@ -36,7 +36,7 @@ describe 'has_many through relation' do
     @book = Book.create(name: 'test book')
   end
 
-  it 'should create via has_many' do
+  it 'should create child objects via #save' do
     @book.stores << Store.new(name: 'store 1')
     assert @book.save
     assert_equal 'store 1', @book.stores.reload.first.name
@@ -53,5 +53,11 @@ describe 'has_many through relation' do
     @book.stores << Store.create(name: 'store 1')
     assert @book.save
     assert_equal 'store 1', @book.stores.reload.first.name
+  end
+
+  it 'should create child objects via #create' do
+    book = Book.create(name: 'sample book', stores: [Store.new(name: 'sample store')])
+    assert book.persisted
+    assert_equal 'sample store', Book.only(':name = ?', 'sample book').stores.first.name
   end
 end
