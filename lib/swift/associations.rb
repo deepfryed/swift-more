@@ -1,11 +1,9 @@
 module Swift
   module Associations
+
     def has_many name, options={}
       HasMany.install self, options.merge(name: name)
-      if options[:through]
-        options = options.dup.merge(name: options[:through], through: nil, target: nil)
-        HasMany.install self, options.reject{|k,v| v.nil?}
-      end
+      HasMany.install self, options.merge(name: options[:through], target: nil, through: nil) if options[:through]
     end
 
     def belongs_to name, options={}
@@ -34,7 +32,7 @@ module Swift
         name           = options.fetch :name
         @source        = options.fetch :source
         @source_scheme = source.is_a?(Class) && source || source.class
-        @target        = name_to_class(options.fetch :target, name)
+        @target        = name_to_class(options[:target] ||  name)
 
         # optional stuff
         @chains     = options.fetch :chains,     nil
@@ -106,6 +104,7 @@ module Swift
 
       def reload
         @collection = nil
+        target.send(endpoint).reload if endpoint
         self
       end
 
@@ -157,6 +156,18 @@ module Swift
       end
 
       def save
+        endpoint ? save_through : save_collection
+      end
+
+      # TODO very slow, speed it up.
+      def save_through
+        rel = target.class_variable_get(:@@belongsto) || {}
+        fn1 = rel.find {|k,v| v.call == self.source_scheme}[0]
+        fn2 = (rel.keys - [fn1])[0]
+        (@collection || []).each {|item| target.new(fn1 => source, fn2 => item).save}
+      end
+
+      def save_collection
         old.each(&:destroy) if old && !old.empty?
         (@collection || []).each do |item|
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
@@ -189,7 +200,12 @@ module Swift
       end
 
       def self.install klass, options
-        name = options.fetch(:name)
+        name       = options.fetch(:name)
+        keys       = klass.class_variable_defined?(:@@belongsto) ? klass.class_variable_get(:@@belongsto) : {}
+        keys[name] = lambda {BelongsTo.new(source: klass, name: name).target}
+
+        klass.class_variable_set(:@@belongsto, keys)
+
         klass.send(:define_method, cache_label) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:belongsto]
         end
