@@ -85,7 +85,7 @@ Experimental extensions to {Swift ORM}[https://github.com/shanna/swift].
     pp Author.only(':name like ?', 'Dale%').books.map(&:name)
 
 
-== M:N relationships
+== N:M relationships
 
     class Store < Swift::Scheme
       store      :stores
@@ -119,6 +119,13 @@ Experimental extensions to {Swift ORM}[https://github.com/shanna/swift].
     book.stores << Store.new(name: 'store 1')
     book.save
     book.stores.reload.first.name #=> 'store 1'
+
+
+== Supported association relationships
+
+* has_many
+* has_one
+* belongs_to
 
 == Contributing
 
