@@ -2,6 +2,10 @@ module Swift
   module Associations
     def has_many name, options={}
       HasMany.install self, options.merge(name: name)
+      if options[:through]
+        options = options.dup.merge(name: options[:through], through: nil, target: nil)
+        HasMany.install self, options.reject{|k,v| v.nil?}
+      end
     end
 
     def belongs_to name, options={}
@@ -24,7 +28,7 @@ module Swift
       include Enumerable
 
       attr_accessor :source, :target, :source_scheme, :source_keys, :target_keys
-      attr_accessor :chains, :conditions, :bind, :ordering
+      attr_accessor :chains, :conditions, :bind, :ordering, :endpoint, :name
 
       def initialize options
         name           = options.fetch :name
@@ -32,14 +36,19 @@ module Swift
         @source_scheme = source.is_a?(Class) && source || source.class
         @target        = name_to_class(options.fetch :target, name)
 
-        @source or raise ArgumentError, '+source+ required'
-        @target or raise ArgumentError, "Unable to deduce class name for relation :#{name}, provide :target"
-
         # optional stuff
         @chains     = options.fetch :chains,     nil
         @conditions = options.fetch :conditions, []
         @bind       = options.fetch :bind,       []
         @ordering   = options.fetch :ordering,   []
+
+        if through = options[:through]
+          @endpoint = name
+          @target   = name_to_class(through)
+        end
+
+        @source or raise ArgumentError, '+source+ required'
+        @target or raise ArgumentError, "Unable to deduce class name for relation :#{name}, provide :target"
       end
 
       def name_to_class name
@@ -61,7 +70,12 @@ module Swift
       end
 
       def all
-        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : Swift.db.load_through(target, self).to_a
+        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : self.load.to_a
+      end
+
+      def load
+        endpoint ? target.send(endpoint, {chains: chains ? [self] + chains : [self]})
+                 : Swift.db.load_through(target, self)
       end
 
       def << *list
@@ -197,6 +211,7 @@ module Swift
 
       def save
         if item = @collection.first
+          item.save if item.new?
           target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", item.send(t))}
         else
           target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", nil)}
