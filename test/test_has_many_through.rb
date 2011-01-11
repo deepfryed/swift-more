@@ -33,9 +33,7 @@ describe 'has_many through relation' do
 
     [Store, Stock, Book].each {|klass| Swift.db.migrate! klass}
 
-    Swift.trace true
     @book = Book.create(name: 'test book')
-    p @book
   end
 
   it 'should create via has_many' do
