@@ -52,4 +52,10 @@ describe 'has_one relation' do
     assert_equal 'third author', Author.get(id: 2).name
     assert_equal 'another book', Author.get(id: 2).book.name
   end
+
+  it '#create supports has_one' do
+    Author.create(name: 'third author', book: Book.new(name: 'another book'))
+    assert_equal 'third author', Author.get(id: 2).name
+    assert_equal 'another book', Author.get(id: 2).book.name
+  end
 end

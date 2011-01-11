@@ -11,7 +11,11 @@ module Swift
     end
 
     def self.create options = {}
-      if instance = Swift.db.create(self, options).first
+      if options.find {|k,v| v.kind_of?(Scheme)}
+        instance = new(options)
+        instance.save
+        instance
+      elsif instance = Swift.db.create(self, options).first
         instance.persisted = true
         instance
       end
