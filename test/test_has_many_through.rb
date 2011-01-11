@@ -48,4 +48,10 @@ describe 'has_many through relation' do
     # uncached
     assert_equal 'store 2', @book.stores.reload.first.name
   end
+
+  it 'should accept persisted objects' do
+    @book.stores << Store.create(name: 'store 1')
+    assert @book.save
+    assert_equal 'store 1', @book.stores.reload.first.name
+  end
 end
