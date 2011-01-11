@@ -1,0 +1,12 @@
+#!/bin/bash
+
+dir=$(cd $(dirname $(readlink -f $0))/.. && pwd)
+
+cmd=ruby1.9.1
+for file in `ls -1 $dir/test/test_*.rb`; do
+  cmd="$cmd -r $file"
+done
+
+cmd="$cmd -e 1"
+echo $cmd
+$cmd
