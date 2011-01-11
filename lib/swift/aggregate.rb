@@ -43,6 +43,10 @@ module Swift
           do_aggregate [:sum, expr, result_alias]
         end
 
+        def avg expr, result_alias = nil
+          do_aggregate [:avg, expr, result_alias]
+        end
+
         def count result_alias = nil
           do_aggregate [:count, '', result_alias]
         end

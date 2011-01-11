@@ -44,10 +44,12 @@ describe 'aggregate helpers' do
     assert_equal 1, @author.books(':name like ?', '%2').count.execute[:count]
   end
 
-  it 'should min, max and sum' do
+  it 'should min, max, sum and avg' do
     assert_equal 2, @author.books.max('id').execute[:max_id]
     assert_equal 1, @author.books.min('id').execute[:min_id]
     assert_equal 3, @author.books.sum('id').execute[:sum_id]
+
+    assert_equal 6, @author.books.avg('length(:name)', 'avg_length').execute[:avg_length]
   end
 
   it 'should group by etc.' do
