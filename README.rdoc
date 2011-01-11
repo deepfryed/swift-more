@@ -56,23 +56,23 @@ Experimental extensions to {Swift ORM}[https://github.com/shanna/swift].
     author.books << Book.new(name: 'The second book')
     author.save
 
-    pp author.books.chapters.size        #-> 0
+    pp author.books.chapters.size        #=> 0
 
     # creates chapters in both books
     author.books.chapters.create(name: 'The first chapter')
-    pp author.books.chapters.size        #-> 0
-    pp author.books.chapters.reload.size #-> 2
+    pp author.books.chapters.size        #=> 0
+    pp author.books.chapters.reload.size #=> 2
 
     # chain relations
     author.books.create(name: 'The third book').chapters.create(name: 'chapter one')
 
     book = author.books.reload[2]
 
-    pp book.chapters.first.name #-> 'chapter one'
-    pp book.author.name         #-> 'Dale Arthurton
-    pp book.author.books.size   #-> 3
+    pp book.chapters.first.name #=> 'chapter one'
+    pp book.author.name         #=> 'Dale Arthurton
+    pp book.author.books.size   #=> 3
 
-    pp author.books(':id in (1,2)').chapters.map(&:name).uniq  #-> ['The first chapter']
+    pp author.books(':id in (1,2)').chapters.map(&:name).uniq  #=> ['The first chapter']
 
     # aggregates - have a look at test/test_aggregates.rb
     pp book.author.books.max(:id).min(:id).execute #=> {max_id: 3, min_id: 1}
@@ -83,6 +83,42 @@ Experimental extensions to {Swift ORM}[https://github.com/shanna/swift].
 
     # Scheme#only allows relation chaining
     pp Author.only(':name like ?', 'Dale%').books.map(&:name)
+
+
+== M:N relationships
+
+    class Store < Swift::Scheme
+      store      :stores
+      attribute  :id,      Integer, serial: true, key: true
+      attribute  :name,    String
+
+      has_many :books, through: :stocks
+    end
+
+    class Store < Swift::Scheme
+      store      :stocks
+      attribute  :id,       Integer, serial: true, key: true
+      attribute  :store_id, Integer
+      attribute  :book_id,  Integer
+
+      belongs_to :store
+      belongs_to :book
+    end
+
+    class Book < Swift::Scheme
+      store      :books
+      attribute  :id,   Integer, serial: true, key: true
+      attribute  :name, String
+
+      has_many   :stores, through: :stocks
+    end
+
+    Swift.migrate!
+
+    book = Book.create(name: 'test book')
+    book.stores << Store.new(name: 'store 1')
+    book.save
+    book.stores.reload.first.name #=> 'store 1'
 
 == Contributing
 

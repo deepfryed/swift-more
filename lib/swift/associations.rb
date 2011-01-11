@@ -10,6 +10,10 @@ module Swift
       BelongsTo.install self, options.merge(name: name)
     end
 
+    def has_one name, options={}
+      HasOne.install self, options.merge(name: name)
+    end
+
     module Chainable
       def method_missing name, *args
         if target.respond_to?(name)
