@@ -42,7 +42,7 @@ module Swift
         @chains     = options.fetch :chains,     nil
         @conditions = options.fetch :conditions, []
         @bind       = options.fetch :bind,       []
-        @ordering   = options.fetch :ordering,   []
+        @ordering   = options.fetch :order,      []
 
         if through = options[:through]
           @endpoint = name
@@ -76,8 +76,12 @@ module Swift
       end
 
       def load
-        endpoint ? target.send(endpoint, {chains: chains ? [self] + chains : [self]})
-                 : Swift.db.load_through(target, self)
+        if endpoint
+          opts = {chains: chains ? [self] + chains : [self]}
+          target.send(endpoint, opts.merge(conditions: conditions, bind: bind, order: ordering))
+        else
+          Swift.db.load_through(target, self)
+        end
       end
 
       def << *list

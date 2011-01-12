@@ -129,4 +129,13 @@ describe 'has_many relation' do
     assert_equal   1, Author.all.rows
     assert_equal   0, Author.all(':name = ?', @author.name).books.size
   end
+
+  it 'should support :order' do
+    @author.books = %w(Book1 Book3 Book2).map{|name| Book.new(name: name)}
+    @author.save
+
+    assert_equal %w(Book1 Book3 Book2), @author.books.reload.map(&:name)
+    assert_equal %w(Book1 Book2 Book3), @author.books(order: %w(name)).map(&:name)
+    assert_equal %w(Book3 Book2 Book1), @author.books(order: ['name desc']).map(&:name)
+  end
 end
