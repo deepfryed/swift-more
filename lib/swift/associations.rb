@@ -1,17 +1,20 @@
 module Swift
   module Associations
 
-    def has_many name, options={}
-      HasMany.install self, options.merge(name: name)
-      HasMany.install self, options.merge(name: options[:through], target: nil, through: nil) if options[:through]
+    def has_many name, target=nil, options={}
+      options, target = target, nil if target.kind_of?(Hash)
+      HasMany.install self, options.merge(name: name, target: target)
+      HasMany.install self, options.merge(name: options[:through], through: nil) if options[:through]
     end
 
     def belongs_to name, options={}
-      BelongsTo.install self, options.merge(name: name)
+      options, target = target, nil if target.kind_of?(Hash)
+      BelongsTo.install self, options.merge(name: name, target: target)
     end
 
     def has_one name, options={}
-      HasOne.install self, options.merge(name: name)
+      options, target = target, nil if target.kind_of?(Hash)
+      HasOne.install self, options.merge(name: name, target: target)
     end
 
     module Chainable
@@ -51,6 +54,10 @@ module Swift
 
         @source or raise ArgumentError, '+source+ required'
         @target or raise ArgumentError, "Unable to deduce class name for relation :#{name}, provide :target"
+
+        if mapping = options.delete(:mapping)
+          options.merge! source_keys: mapping.keys, target_keys: mapping.values
+        end
       end
 
       def name_to_class name
@@ -118,7 +125,7 @@ module Swift
 
       def self.cached source, name, args, options
         if args.empty?
-          source.send(cache_label)[name] ||= new(options.merge(source: source))
+          source.send(association_cache)[name] ||= new(options.merge(source: source))
         else
           uncached(source, name, args, options)
         end
@@ -131,22 +138,31 @@ module Swift
         new(custom)
       end
 
-      def self.cache_label
-        @cache_label ||= '_%s_cached' % self.to_s.split(/::/).last.downcase
+      def self.label
+        @label ||= self.to_s.split(/::/).last.downcase.to_sym
+      end
+
+      def self.association_cache
+        @association_cache ||= "_#{label}_cached"
       end
 
       def self.get_association_index klass
-        klass.class_variable_defined?(:@@association_index) ? klass.class_variable_get(:@@association_index) : {}
+        if klass.class_variable_defined?(:@@association_index)
+          klass.class_variable_get(:@@association_index)[label] || {}
+        else
+          {}
+        end
       end
 
       def self.set_association_index klass, value
-        klass.class_variable_set(:@@association_index, value)
+        orig  = klass.class_variable_get(:@@association_index) rescue {}
+        klass.class_variable_set(:@@association_index, orig.merge(label => value))
       end
 
       def self.add_association klass, type, name
-        __assoc__ = self
-        index     = get_association_index(klass)
-        (index[type] ||= {})[name] = lambda {__assoc__.new(source: klass, name: name).target}
+        __assoc__   = self
+        index       = get_association_index(klass)
+        index[name] = lambda {__assoc__.new(source: klass, name: name)}
         set_association_index(klass, index)
       end
     end # Base
@@ -164,7 +180,7 @@ module Swift
         name = options.fetch(:name)
         add_association(klass, :hasmany, name)
 
-        klass.send(:define_method, cache_label) do
+        klass.send(:define_method, association_cache) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasmany]
         end
         klass.send(:define_method, name) do |*args|
@@ -184,8 +200,8 @@ module Swift
 
       # TODO very slow, speed it up.
       def save_through
-        rel = self.class.get_association_index(target)[:belongsto] || {}
-        fn1 = rel.find {|k,v| v.call == self.source_scheme}[0]
+        rel = BelongsTo.get_association_index(target)
+        fn1 = rel.find {|k,v| v.call.target == self.source_scheme}[0]
         fn2 = (rel.keys - [fn1])[0]
         (@collection || []).each {|item| target.new(fn1 => source, fn2 => item).save}
       end
@@ -227,7 +243,7 @@ module Swift
         name = options.fetch(:name)
         add_association(klass, :belongsto, name)
 
-        klass.send(:define_method, cache_label) do
+        klass.send(:define_method, association_cache) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:belongsto]
         end
         klass.send(:define_method, name) do |*args|
@@ -261,7 +277,7 @@ module Swift
         name = options.fetch(:name)
         add_association(klass, :hasone, name)
 
-        klass.send(:define_method, cache_label) do
+        klass.send(:define_method, association_cache) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasone]
         end
         klass.send(:define_method, name) do |*args|
@@ -293,8 +309,8 @@ module Swift
 
       def setup scheme, args
         @scheme, @args = scheme, args
-        @index = Associations::Base.get_association_index(scheme).map do |type, hash|
-          hash.keys.map{|name| name.to_sym}
+        @index = [Associations::HasMany, Associations::HasOne, Associations::BelongsTo].map do |klass|
+          klass.get_association_index(scheme).keys.map(&:to_sym)
         end.flatten
       end
 
