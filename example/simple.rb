@@ -15,6 +15,13 @@ class Chapter < Swift::Scheme
   belongs_to :book
 end
 
+class Author < Swift::Scheme
+  store     :authors
+  attribute :id,   Integer, serial: true, key: true
+  attribute :name, String
+  has_many  :books
+end
+
 class Book < Swift::Scheme
   store      :books
   attribute  :id,           Integer, serial: true, key: true
@@ -22,13 +29,6 @@ class Book < Swift::Scheme
   attribute  :name,         String
   belongs_to :author
   has_many   :chapters
-end
-
-class Author < Swift::Scheme
-  store     :authors
-  attribute :id,   Integer, serial: true, key: true
-  attribute :name, String
-  has_many  :books
 end
 
 Swift.migrate!
