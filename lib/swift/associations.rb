@@ -7,12 +7,12 @@ module Swift
       HasMany.install self, options.merge(name: options[:through], through: nil) if options[:through]
     end
 
-    def belongs_to name, options={}
+    def belongs_to name, target=nil, options={}
       options, target = target, nil if target.kind_of?(Hash)
       BelongsTo.install self, options.merge(name: name, target: target)
     end
 
-    def has_one name, options={}
+    def has_one name, target=nil, options={}
       options, target = target, nil if target.kind_of?(Hash)
       HasOne.install self, options.merge(name: name, target: target)
     end
@@ -57,7 +57,7 @@ module Swift
         end
 
         @source or raise ArgumentError, '+source+ required'
-        @target or raise ArgumentError, "Unable to deduce class name for relation :#{name}, provide :target"
+        @target or raise ArgumentError, "Unable to deduce class name for relation :#{name} in #{@source}"
 
         if mapping = options.delete(:mapping)
           options.merge! source_keys: mapping.keys, target_keys: mapping.values
@@ -166,10 +166,11 @@ module Swift
         klass.class_variable_set(:@@association_index, orig.merge(label => value))
       end
 
-      def self.add_association klass, type, name
+      def self.add_association klass, type, options
         __assoc__   = self
         index       = get_association_index(klass)
-        index[name] = lambda {__assoc__.new(source: klass, name: name)}
+        name        = options.fetch(:name)
+        index[name] = lambda {__assoc__.new(options.merge(source: klass))}
         set_association_index(klass, index)
       end
     end # Base
@@ -185,7 +186,7 @@ module Swift
 
       def self.install klass, options
         name = options.fetch(:name)
-        add_association(klass, :hasmany, name)
+        add_association(klass, :hasmany, options)
 
         klass.send(:define_method, association_cache) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasmany]
@@ -248,7 +249,7 @@ module Swift
 
       def self.install klass, options
         name = options.fetch(:name)
-        add_association(klass, :belongsto, name)
+        add_association(klass, :belongsto, options)
 
         klass.send(:define_method, association_cache) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:belongsto]
@@ -282,7 +283,7 @@ module Swift
     class HasOne < HasMany
       def self.install klass, options
         name = options.fetch(:name)
-        add_association(klass, :hasone, name)
+        add_association(klass, :hasone, options)
 
         klass.send(:define_method, association_cache) do
           (@__rel ||= Hash.new{|h,k| h[k] = Hash.new})[:hasone]
