@@ -5,14 +5,6 @@ require 'swift'
 require 'swift/migrations'
 require 'swift-more'
 
-class Author < Swift::Scheme
-  store     :authors
-  attribute :id,   Integer, key: true, serial: true
-  attribute :name, String
-
-  has_many :books
-end # Author
-
 class Book < Swift::Scheme
   store     :books
   attribute :id,        Integer, key: true, serial: true
@@ -21,6 +13,14 @@ class Book < Swift::Scheme
 
   belongs_to :author
 end
+
+class Author < Swift::Scheme
+  store     :authors
+  attribute :id,   Integer, key: true, serial: true
+  attribute :name, String
+
+  has_many :books
+end # Author
 
 class Runner
   attr_reader :tests, :runs, :rows, :driver
@@ -47,7 +47,7 @@ class Runner
   end
 
   def run_creates
-    Benchmark.run("swift #create") do
+    Benchmark.run("swift-m #create") do
       rows.times do |n|
         author = Author.create(name: "author #{n}")
         author.books << Book.new(name: "book #{n}")
@@ -57,7 +57,7 @@ class Runner
   end
 
   def run_selects
-    Benchmark.run("swift #select") do
+    Benchmark.run("swift-m #select") do
       runs.times do
         Author.books.each {|book| book.id }
       end
@@ -65,7 +65,7 @@ class Runner
   end
 
   def run_updates
-    Benchmark.run("swift #update") do
+    Benchmark.run("swift-m #update") do
       runs.times do
         Author.all.each {|author| author.books.each {|book| book.update(name: 'book')}}
       end
