@@ -55,10 +55,12 @@ module Swift
 
     def rollback
       cache = @__rel || {}
-      self.send("#{scheme.header.serial}=", nil) if new? && scheme.header.serial
+      if new? && (serial = scheme.header.serial)
+        tuple[serial] = nil
+      end
       (cache[:hasmany] || {}).each {|name, rel| rel.rollback}
       (cache[:hasone]  || {}).each {|name, rel| rel.rollback}
-      self.visited   = false
+      self.visited = false
     end
   end
 end

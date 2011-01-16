@@ -44,8 +44,10 @@ class Runner
   def run_creates
     Benchmark.run("swift-v #create") do
       rows.times do |n|
-        author = Author.create(name: "author #{n}").first
-        book   = Book.create(name: "book #{n}", author_id: author.id).first
+        Swift.db.transaction do
+          author = Author.create(name: "author #{n}").first
+          book   = Book.create(name: "book #{n}", author_id: author.id).first
+        end
       end
     end
   end
@@ -61,8 +63,11 @@ class Runner
 
   def run_updates
     Benchmark.run("swift-v #update") do
+      stmt = Swift.db.prepare(Book, "select b.* from authors a join books b on (a.id = b.author_id) where a.name like ?")
       runs.times do
-        Author.all.each {|author| Book.all('author_id = ?', author.id) {|book| book.update(name: 'book')}}
+        stmt.execute('author 1%') do |book|
+          book.update(name: 'book')
+        end
       end
     end
   end

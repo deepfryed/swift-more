@@ -75,7 +75,9 @@ class Runner
   def run_updates
     Benchmark.run("ar #update") do
       runs.times do |n|
-        Author.find(:all).each {|author| author.books.each {|book| book.update_attributes(name: 'book')}}
+        Author.find(:all, conditions: ['name like ?', 'author 1%'], include: :books).each do |author|
+          author.books.each {|book| book.update_attributes(name: 'book')}
+        end
       end
     end
   end

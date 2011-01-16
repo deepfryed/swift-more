@@ -62,7 +62,7 @@ class Runner
   def run_updates
     Benchmark.run("dm #update") do
       runs.times do
-        Author.all.each {|author| author.books.each {|book| book.update(name: 'book')}}
+        Author.all(:name.like => 'author 1%').books.each {|book| book.update(name: 'book')}
       end
     end
   end
