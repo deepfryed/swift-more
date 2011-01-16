@@ -91,8 +91,11 @@ module Swift
         end
       end
 
+      # only appends to whatever has been loaded so far. you need to save and reload if you want to
+      # iterate through the entire collection.
       def << *list
-        all && list.each {|item| @collection << item }
+        @collection ||= []
+        @collection += list
       end
 
       def [] n

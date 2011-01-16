@@ -1,15 +1,17 @@
 module Swift
   def self.migrate! name = nil
-    schema.each do |scheme|
-      scheme.migrate! db(name)
-    end
+    adapter = db(name)
+    adapter.run_migrations do
+      schema.each do |scheme|
+        scheme.migrate! adapter
+      end
 
-    schema.each do |scheme|
-      Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
-        adapter = db(name)
-        args    = [rel.source, rel.source_keys, rel.target, rel.target_keys]
-        [adapter.foreign_key_definition(*args)].flatten.each do |sql|
-          adapter.execute(sql)
+      schema.each do |scheme|
+        Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
+          args    = [rel.source, rel.source_keys, rel.target, rel.target_keys]
+          [adapter.foreign_key_definition(*args)].flatten.each do |sql|
+            adapter.execute(sql)
+          end
         end
       end
     end
@@ -23,6 +25,11 @@ module Swift
         alter table #{source.store} add constraint #{name} foreign key(#{source_keys.join(', ')})
         references #{target.store}(#{target_keys.join(', ')}) on delete cascade on update cascade
       SQL
+      sql.gsub(/[\r\n]/, ' ').gsub(/ +/, ' ').strip
+    end
+
+    def run_migrations &block
+      block.call
     end
   end
 
@@ -41,6 +48,14 @@ module Swift
 
         [ "drop table if exists #{source.store}", "create table #{source.store} (#{fields})"]
       end
-    end
-  end
+    end # Sqlite3
+
+    class Mysql < Adapter
+      def run_migrations &block
+        execute('set foreign_key_checks = 0')
+        block.call
+        execute('set foreign_key_checks = 1')
+      end
+    end # Mysql
+  end # DB
 end # Swift
