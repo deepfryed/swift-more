@@ -20,8 +20,12 @@ module Swift
     module Chainable
       def method_missing name, *args
         if target.respond_to?(name)
-          options = args.last.is_a?(Hash) ? args.pop : {}
-          target.send(name, *args.push(options.merge(chains: chains ? chains.unshift(self) : [self])))
+          self.class.send(:define_method, name) do |*params|
+            options = params.last.is_a?(Hash) ? params.pop : {}
+            params.push(options.merge(chains: self.chains ? self.chains.unshift(self) : [self]))
+            self.target.send(name, *params)
+          end
+          self.send(name, *args)
         else
           super
         end

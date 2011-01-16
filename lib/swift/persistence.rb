@@ -29,11 +29,11 @@ module Swift
       cache = @__rel || {}
       begin
         Swift.db.transaction do |db|
+          self.visited = true
           (cache[:belongsto] || {}).each {|name, rel| rel.save}
           new? && db.create(scheme, self) || self.update
-          self.visited = true
-          (cache[:hasmany] || {}).each {|name, rel| rel.save}
-          (cache[:hasone]  || {}).each {|name, rel| rel.save}
+          (cache[:hasmany]   || {}).each {|name, rel| rel.save}
+          (cache[:hasone]    || {}).each {|name, rel| rel.save}
         end
         commit
       rescue Exception => error
