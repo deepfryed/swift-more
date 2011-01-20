@@ -130,6 +130,15 @@ module Swift
         self
       end
 
+      def destroy
+        if endpoint
+          opts = {chains: chains ? [self] + chains : [self]}
+          target.send(endpoint, opts.merge(conditions: conditions, bind: bind, order: ordering)).destroy
+        else
+          Swift.db.destroy_through target, self
+        end
+      end
+
       def self.cached source, name, args, options
         if args.empty?
           source.send(association_cache)[name] ||= new(options.merge(source: source))
