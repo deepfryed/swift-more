@@ -2,7 +2,27 @@ module Swift
   class Adapter
     module Associations
       class SQL
+        def all_without_join relationship
+          sql  = "select * from #{relationship.target.store} where "
+          sql += relationship.target_keys.map{|key| "#{key} = ?"}.join(' and ')
+          bind = relationship.source_keys.map{|key| relationship.source.send(key)}
+
+          unless relationship.conditions.empty?
+            bind += relationship.bind
+            sql  += ' and (%s)' % relationship.conditions.first.gsub(/:(\w+)/){relationship.target.send($1).field}
+          end
+
+          unless relationship.ordering.empty?
+            ordering = relationship.ordering.join(', ')
+            sql += ' order by %s' % ordering.gsub(/:(\w+)/){relationship.target.send($1).field}
+          end
+
+          [sql, bind]
+        end
+
         def all relationship
+          return all_without_join(relationship) if relationship.chains.nil? or relationship.chains.empty?
+
           sql = 'select distinct t1.* from %s' % join(relationship, 't1', 't2')
           if relationship.chains
 
