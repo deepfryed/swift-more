@@ -1,19 +1,15 @@
 module Swift
   def self.migrate! name = nil
-    adapter = db(name)
-    adapter.run_migrations do
-      schema.each do |scheme|
-        scheme.migrate! adapter
-      end
+    db(name).run_migrations do |db|
+      schema.each {|scheme| db.migrate! scheme}
+      schema.each {|scheme| db.migrate_associations! scheme}
+    end
+  end
 
-      schema.each do |scheme|
-        Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
-          args    = [rel.source, rel.source_keys, rel.target, rel.target_keys]
-          [adapter.foreign_key_definition(*args)].flatten.each do |sql|
-            adapter.execute(sql)
-          end
-        end
-      end
+  class Scheme
+    def self.migrate! db = Swift.db, associations=false
+      db.migrate! self
+      db.migrate_associations!(self) if associations
     end
   end
 
@@ -29,7 +25,14 @@ module Swift
     end
 
     def run_migrations &block
-      block.call
+      block.call(self)
+    end
+
+    def migrate_associations! scheme
+      Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
+        args = [rel.source, rel.source_keys, rel.target, rel.target_keys]
+        [foreign_key_definition(*args)].flatten.each {|sql| execute(sql)}
+      end
     end
   end
 
@@ -53,7 +56,7 @@ module Swift
     class Mysql < Adapter
       def run_migrations &block
         execute('set foreign_key_checks = 0')
-        block.call
+        block.call(self)
         execute('set foreign_key_checks = 1')
       end
     end # Mysql
