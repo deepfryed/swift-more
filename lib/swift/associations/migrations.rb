@@ -29,7 +29,7 @@ module Swift
     end
 
     def migrate_associations! scheme
-      Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
+      Swift::Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
         args = [rel.source, rel.source_keys, rel.target, rel.target_keys]
         [foreign_key_definition(*args)].flatten.each {|sql| execute(sql)}
       end
