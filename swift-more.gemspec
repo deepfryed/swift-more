@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.files                     = Dir.glob(File.dirname(__FILE__) + '/lib/**/*.rb')
   s.required_rubygems_version = Gem::Requirement.new('>= 1.3.6')
 
-  s.add_dependency             'swift',    ['~> 0.8.0']
-  s.add_development_dependency 'swift',    ['~> 0.8.0']
+  s.add_dependency             'swift',    ['~> 0.9.0']
+  s.add_development_dependency 'swift',    ['~> 0.9.0']
   s.add_development_dependency 'minitest', ['~> 2.0.1']
 end
