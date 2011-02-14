@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name                      = 'swift-more'
-  s.version                   = '0.3.4'
+  s.version                   = '0.3.5'
   s.rubygems_version          = '1.3.7'
   s.authors                   = ['Bharanee Rathna']
   s.email                     = ['deepfryed@gmail.com']
