@@ -94,7 +94,7 @@ module Swift
       else
         key = target.header.keys.first
         sql, bind = associations.all(relationship)
-        sql.sub!(/t1\.\*/, 't1.%s' % key)
+        sql.sub!(/\*/, '%s' % key)
         sql = 'delete from %s where %s in (%s)' % [ target.store, key, sql ]
         execute(sql, *bind)
       end
