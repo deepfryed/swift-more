@@ -15,7 +15,7 @@ module Swift
         instance = new(options)
         instance.save
         instance
-      elsif instance = Swift.db.create(self, options).first
+      elsif instance = Swift.db.create(self, options)
         instance.persisted = true
         instance
       end
