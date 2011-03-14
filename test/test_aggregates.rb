@@ -40,16 +40,16 @@ describe 'aggregate helpers' do
   end
 
   it 'should count' do
-    assert_equal 2, @author.books.count('books').execute[:books]
-    assert_equal 1, @author.books(':name like ?', '%2').count.execute[:count]
+    assert_equal 2, @author.books.count('books').execute.first[:books]
+    assert_equal 1, @author.books(':name like ?', '%2').count.execute.first[:count]
   end
 
   it 'should min, max, sum and avg' do
-    assert_equal 2, @author.books.max('id').execute[:max_id]
-    assert_equal 1, @author.books.min('id').execute[:min_id]
-    assert_equal 3, @author.books.sum('id').execute[:sum_id]
+    assert_equal 2, @author.books.max('id').execute.first[:max_id]
+    assert_equal 1, @author.books.min('id').execute.first[:min_id]
+    assert_equal 3, @author.books.sum('id').execute.first[:sum_id]
 
-    assert_equal 6, @author.books.avg('length(:name)', 'avg_length').execute[:avg_length]
+    assert_equal 6, @author.books.avg('length(:name)', 'avg_length').execute.first[:avg_length]
   end
 
   it 'should group by etc.' do
@@ -64,6 +64,6 @@ describe 'aggregate helpers' do
   end
 
   it 'should allow chaining' do
-    assert_equal [1,2], @author.books.max(:id, 'max').min(:id, 'min').execute.values_at(:min, :max)
+    assert_equal [1,2], @author.books.max(:id, 'max').min(:id, 'min').execute.first.values_at(:min, :max)
   end
 end

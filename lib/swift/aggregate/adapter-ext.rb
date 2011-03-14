@@ -24,7 +24,7 @@ module Swift
       end
 
       sql += " having #{having}" if having
-      grouping ? execute(sql, *bind) : execute(sql, *bind).first
+      execute(sql, *bind)
     end
   end # Adapter
 end # Swift
