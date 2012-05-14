@@ -87,10 +87,10 @@ module Swift
       prepare(scheme, sql + extra).execute(*bind)
     end
 
-    def destroy_through scheme, relationship
+    def delete_through scheme, relationship
       target = relationship.target
       if target.header.keys.length > 1
-        self.load_through(scheme, relationship).map(&:destroy)
+        self.load_through(scheme, relationship).map(&:delete)
       else
         key = target.header.keys.first
         sql, bind = associations.all(relationship)

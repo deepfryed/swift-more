@@ -14,7 +14,7 @@ module Swift
   end
 
   # TODO customizable on-delete and on-update actions.
-  class Adapter
+  class Adapter::Sql
     def foreign_key_definition source, source_keys, target, target_keys
       name = "#{source.store}_#{target.store}_#{source_keys.join('_')}_fkey"
       sql  =<<-SQL
@@ -37,7 +37,7 @@ module Swift
   end
 
   module DB
-    class Sqlite3 < Adapter
+    class Sqlite3 < Adapter::Sql
       # NOTE no alter table add foreign key support - got to rebuild the table.
       def foreign_key_definition source, source_keys, target, target_keys
 
@@ -53,7 +53,7 @@ module Swift
       end
     end # Sqlite3
 
-    class Mysql < Adapter
+    class Mysql < Adapter::Sql
       def run_migrations &block
         execute('set foreign_key_checks = 0')
         block.call(self)

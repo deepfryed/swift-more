@@ -2,6 +2,18 @@ module Swift
   class Scheme
     attr_accessor :persisted, :visited
 
+    class << self
+      alias :class_name :name
+    end
+
+    def self.first where = nil, *args
+      execute("select * from #{self} %s limit 1" % (where ? "where #{where}" : ''), *args).first
+    end
+
+    def self.all where = nil, *args, &block
+      execute("select * from #{self} %s" % (where ? "where #{where}" : ''), *args, &block)
+    end
+
     # TODO wrappers for load & create ?
     def self.load tuple
       scheme           = allocate

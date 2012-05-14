@@ -130,12 +130,12 @@ module Swift
         self
       end
 
-      def destroy
+      def delete
         if endpoint
           opts = {chains: chains ? [self] + chains : [self]}
-          target.send(endpoint, opts.merge(conditions: conditions, bind: bind, order: ordering)).destroy
+          target.send(endpoint, opts.merge(conditions: conditions, bind: bind, order: ordering)).delete
         else
-          Swift.db.destroy_through target, self
+          Swift.db.delete_through target, self
         end
       end
 
@@ -190,7 +190,7 @@ module Swift
       def initialize options
         super(options)
         @source_keys = options.fetch :source_keys, [:id]
-        @target_keys = options.fetch :target_keys, [source_scheme.to_s.split(/::/).last.downcase + '_id']
+        @target_keys = options.fetch :target_keys, [source_scheme.class_name.to_s.split(/::/).last.downcase + '_id']
       end
 
       def self.install klass, options
@@ -224,7 +224,7 @@ module Swift
       end
 
       def save_collection
-        old.each(&:destroy) if old && !old.empty?
+        old.each(&:delete) if old && !old.empty?
         (@collection || []).each do |item|
           next if item.visited
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
@@ -253,7 +253,7 @@ module Swift
       def initialize options
         super(options)
         @target_keys = options.fetch :target_keys, [:id]
-        @source_keys = options.fetch :source_keys, [target.to_s.split(/::/).last.downcase + '_id']
+        @source_keys = options.fetch :source_keys, [target.class_name.to_s.split(/::/).last.downcase + '_id']
       end
 
       def self.install klass, options
@@ -335,7 +335,7 @@ module Swift
         if @index.include?(name)
           Associations::HasMany.uncached(@scheme, nil, @args, {target: @scheme, name: nil}).send(name, *args)
         else
-          Swift.db.all(@scheme, *@args).send(name, *args, &block)
+          Swift.db.execute("select * from #{@scheme}", *@args).send(name, *args, &block)
         end
       end
     end # LazyAll

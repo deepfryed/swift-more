@@ -54,7 +54,7 @@ describe 'belongs_to relation' do
 
   it 'should chain relations' do
     assert @author.books.create(name: 'book two').chapters.create(name: 'chapter one')
-    assert book = Book.first(':name = ?', 'book two')
+    assert book = Book.first('name = ?', 'book two')
 
     assert_equal 'chapter one', book.chapters.first.name
     assert_equal @author.name,  book.author.name

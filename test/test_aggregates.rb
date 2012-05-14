@@ -49,7 +49,7 @@ describe 'aggregate helpers' do
     assert_equal 1, @author.books.min('id').execute.first[:min_id]
     assert_equal 3, @author.books.sum('id').execute.first[:sum_id]
 
-    assert_equal 6, @author.books.avg('length(:name)', 'avg_length').execute.first[:avg_length]
+    assert_equal 6, @author.books.avg('length(name)', 'avg_length').execute.first[:avg_length]
   end
 
   it 'should group by etc.' do

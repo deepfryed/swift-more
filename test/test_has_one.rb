@@ -44,7 +44,7 @@ describe 'has_one relation' do
 
   it 'should also save Author if needed' do
     Book.new(name: 'next book', author: Author.new(name: 'second author')).save
-    assert_equal 'next book', Author.first(':name = ?', 'second author').book.name
+    assert_equal 'next book', Author.first('name = ?', 'second author').book.name
   end
 
   it 'should also save Book if needed' do
