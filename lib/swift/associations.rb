@@ -182,6 +182,10 @@ module Swift
         index[name] = lambda {__assoc__.new(options.merge(source: klass))}
         set_association_index(klass, index)
       end
+
+      def self.scheme_name scheme
+        Inflect.singular scheme.class_name.to_s.split(/::/).last.downcase
+      end
     end # Base
 
     class HasMany < Base
@@ -190,7 +194,7 @@ module Swift
       def initialize options
         super(options)
         @source_keys = options.fetch :source_keys, [:id]
-        @target_keys = options.fetch :target_keys, [source_scheme.class_name.to_s.split(/::/).last.downcase + '_id']
+        @target_keys = options.fetch :target_keys, ["#{Base.scheme_name(source_scheme)}_id"]
       end
 
       def self.install klass, options
@@ -253,7 +257,7 @@ module Swift
       def initialize options
         super(options)
         @target_keys = options.fetch :target_keys, [:id]
-        @source_keys = options.fetch :source_keys, [target.class_name.to_s.split(/::/).last.downcase + '_id']
+        @source_keys = options.fetch :source_keys, ["#{Base.scheme_name(target)}_id"]
       end
 
       def self.install klass, options
