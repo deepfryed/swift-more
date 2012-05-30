@@ -1,4 +1,6 @@
-#!/usr/bin/ruby -Ilib
+#!/usr/bin/env ruby
+
+$:.unshift File.dirname(__FILE__) + '/../lib'
 
 require 'pp'
 require 'swift'
@@ -68,5 +70,5 @@ pp author.books.count.execute #=> {count: 3}
 
 
 # Scheme#all is lazy
-pp Author.all(':name like ?', 'Dale%').map(&:name)
-pp Author.all(':name like ?', 'Dale%').books.map(&:name)
+pp Author.all('name like ?', 'Dale%').map(&:name)
+pp Author.all('name like ?', 'Dale%').books.map(&:name)

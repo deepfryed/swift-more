@@ -99,6 +99,9 @@ module Swift
       # iterate through the entire collection.
       def << *list
         @collection ||= []
+        if invalid = list.reject {|scheme| scheme.kind_of?(target)} and !invalid.empty?
+          #raise ArgumentError, "invalid object, expecting #{target.class_name} got #{invalid}"
+        end
         @collection += list
       end
 
@@ -320,7 +323,7 @@ module Swift
     class LazyAll
       def self.new scheme, args, &block
         if block_given?
-          Swift.db.all(scheme, *args, &block)
+          scheme._all(*args, &block)
         else
           instance = allocate
           instance.setup(scheme, args)
@@ -339,13 +342,17 @@ module Swift
         if @index.include?(name)
           Associations::HasMany.uncached(@scheme, nil, @args, {target: @scheme, name: nil}).send(name, *args)
         else
-          Swift.db.execute("select * from #{@scheme}", *@args).send(name, *args, &block)
+          @scheme._all(*@args).send(name, *args, &block)
         end
       end
     end # LazyAll
 
-    def self.all *args, &block
-      LazyAll.new(self, args, &block)
+    class << self
+      alias _all all
+
+      def all *args, &block
+        LazyAll.new(self, args, &block)
+      end
     end
   end # Scheme
 end #Swift

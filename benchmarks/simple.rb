@@ -1,7 +1,8 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 require 'optparse'
 require 'benchmark'
+require 'bundler/setup'
 
 ENV['TZ'] = ":Australia/Melbourne"
 

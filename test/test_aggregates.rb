@@ -1,4 +1,4 @@
-require_relative 'helper'
+require 'helper'
 
 describe 'aggregate helpers' do
   before do
@@ -41,7 +41,7 @@ describe 'aggregate helpers' do
 
   it 'should count' do
     assert_equal 2, @author.books.count('books').execute.first[:books]
-    assert_equal 1, @author.books(':name like ?', '%2').count.execute.first[:count]
+    assert_equal 1, @author.books('name like ?', '%2').count.execute.first[:count]
   end
 
   it 'should min, max, sum and avg' do

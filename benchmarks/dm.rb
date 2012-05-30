@@ -1,4 +1,3 @@
-require_relative 'gems/environment'
 require 'etc'
 require 'benchmark'
 require 'dm-core'

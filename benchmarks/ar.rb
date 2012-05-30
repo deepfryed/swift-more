@@ -1,4 +1,4 @@
-require_relative 'gems/environment'
+
 require 'etc'
 require 'pg'
 require 'mysql2'

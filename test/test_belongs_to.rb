@@ -1,4 +1,4 @@
-require_relative 'helper'
+require 'helper'
 
 describe 'belongs_to relation' do
   before do

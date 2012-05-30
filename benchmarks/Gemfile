@@ -1,8 +1,5 @@
 # vim: syntax=ruby
-# bundler08
-bundle_path 'gems'
-disable_rubygems
-disable_system_gems
+source :rubygems
 
 # Fork has massive pure Ruby IDNA junk removed.
 gem 'addressable', '2.2.1' # http://github.com/deepfryed/addressable
