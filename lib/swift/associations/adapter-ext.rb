@@ -2,6 +2,8 @@ module Swift
   class Adapter
     module Associations
       class SQL
+        FIELD_RE = %r{:(?<field>\w+)|(?:\w+\.(?<field>\w+))}
+
         def all_without_join relationship
           sql  = "select * from #{relationship.target.store} where "
           sql += relationship.target_keys.map{|key| "#{key} = ?"}.join(' and ')
@@ -9,12 +11,12 @@ module Swift
 
           unless relationship.conditions.empty?
             bind += relationship.bind
-            sql  += ' and (%s)' % relationship.conditions.first
+            sql  += ' and (%s)' % relationship.conditions.first.gsub(FIELD_RE) {relationship.target.send($~[:field]).field}
           end
 
           unless relationship.ordering.empty?
             ordering = relationship.ordering.join(', ')
-            sql += ' order by %s' % ordering
+            sql += ' order by %s' % ordering.gsub(FIELD_RE) {relationship.target.send($~[:field]).field}
           end
 
           [sql, bind]
@@ -43,7 +45,7 @@ module Swift
           sql += ' where %s' % where.join(' and ') unless where.empty?
           unless relationship.ordering.empty?
             ordering = relationship.ordering.join(', ')
-            sql += ' order by %s' % ordering.gsub(/(\w+)/){ 't1.%s' % relationship.target.send($1).field }
+            sql += ' order by %s' % ordering.gsub(FIELD_RE){ 't1.%s' % relationship.target.send($~[:field]).field }
           end
 
           [ sql, bind ]
@@ -67,7 +69,7 @@ module Swift
 
         def conditions rel, alias1, alias2
           bind   = rel.bind
-          clause = rel.conditions.map{|c| c.gsub(/(\w+)/){ '%s.%s' % [ alias1, rel.target.send($1).field ] } }
+          clause = rel.conditions.map{|c| c.gsub(FIELD_RE){ '%s.%s' % [ alias1, rel.target.send($~[:field]).field ] } }
           if rel.source.kind_of?(Scheme)
             keys   =  rel.source_scheme.header.keys
             clause << '(%s)' % keys.map{|k| '%s.%s = ?' % [alias2, k] }.join(' and ')

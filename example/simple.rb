@@ -61,14 +61,8 @@ pp book.chapters.first.name #-> 'chapter one'
 pp book.author.name         #-> 'Dale Arthurton
 pp book.author.books.size   #-> 3
 
-pp author.books(':id in (1,2)').chapters.map(&:name).uniq  #-> ['The first chapter']
-
-
-# aggregates - have a look at test/test_aggregates.rb
-pp book.author.books.max(:id).min(:id).execute #=> {max_id: 3, min_id: 1}
-pp author.books.count.execute #=> {count: 3}
-
+pp author.books('books.id in (1,2)').chapters.map(&:name).uniq  #-> ['The first chapter']
 
 # Scheme#all is lazy
-pp Author.all('name like ?', 'Dale%').map(&:name)
-pp Author.all('name like ?', 'Dale%').books.map(&:name)
+pp Author.all('authors.name like ?', 'Dale%').map(&:name)
+pp Author.all('authors.name like ?', 'Dale%').books.map(&:name)

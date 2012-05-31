@@ -127,7 +127,7 @@ describe 'has_many relation' do
   it 'should lazy execute #all' do
     assert_kind_of Swift::Scheme::LazyAll, Author.all
     assert_equal   1, Author.all.rows
-    assert_equal   0, Author.all('name = ?', @author.name).books.size
+    assert_equal   0, Author.all(':name = ?', @author.name).books.size
   end
 
   it 'should support :order' do
