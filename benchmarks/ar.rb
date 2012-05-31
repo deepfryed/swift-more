@@ -7,12 +7,12 @@ require 'active_support'
 require 'active_record'
 
 class Author < ActiveRecord::Base
-  set_table_name 'authors'
+  self.table_name = 'authors'
   has_many :books
 end # Author
 
 class Book < ActiveRecord::Base
-  set_table_name 'books'
+  self.table_name = 'books'
   belongs_to :author
 end # Book
 
@@ -33,7 +33,7 @@ class Runner
     migrate!
     yield run_creates
     yield run_selects
-    yield run_updates
+    yield run_updates if tests.include? :update
   end
 
   def migrate!
@@ -67,7 +67,7 @@ class Runner
   def run_selects
     Benchmark.run("ar #select") do
       runs.times do
-        Author.find(:all, include: :books).map(&:books).flatten.each {|book| book.id}
+        Author.where("id < 5", include: 'books').map(&:books).flatten.each {|book| book.id}
       end
     end
   end

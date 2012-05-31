@@ -43,7 +43,7 @@ class Runner
     Swift.migrate!
     yield run_creates
     yield run_selects
-    yield run_updates
+    yield run_updates if tests.include? :update
   end
 
   def run_creates
@@ -59,7 +59,7 @@ class Runner
   def run_selects
     Benchmark.run("swift-m #select") do
       runs.times do
-        Author.books.each {|book| book.id }
+        Author.all(':id < ?', 5).books.each {|book| book.id }
       end
     end
   end
