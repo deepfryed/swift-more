@@ -1,18 +1,18 @@
 module Swift
   module Associations
 
-    def has_many name, target=nil, options={}
+    def has_many name, target = nil, options={}
       options, target = target, nil if target.kind_of?(Hash)
       HasMany.install self, options.merge(name: name, target: target)
       HasMany.install self, options.merge(name: options[:through], through: nil) if options[:through]
     end
 
-    def belongs_to name, target=nil, options={}
+    def belongs_to name, target = nil, options={}
       options, target = target, nil if target.kind_of?(Hash)
       BelongsTo.install self, options.merge(name: name, target: target)
     end
 
-    def has_one name, target=nil, options={}
+    def has_one name, target = nil, options={}
       options, target = target, nil if target.kind_of?(Hash)
       HasOne.install self, options.merge(name: name, target: target)
     end
@@ -23,9 +23,9 @@ module Swift
           self.class.send(:define_method, name) do |*params|
             options = params.last.is_a?(Hash) ? params.pop : {}
             params.push(options.merge(chains: self.chains ? self.chains.unshift(self) : [self]))
-            self.target.send(name, *params)
+            target.send(name, *params)
           end
-          self.send(name, *args)
+          send(name, *args)
         else
           super
         end
@@ -83,7 +83,7 @@ module Swift
       end
 
       def all
-        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : self.load.to_a
+        @collection ||= source && source.respond_to?(:new?) && source.new? ? [] : self.load.entries
       end
 
       def load
@@ -99,10 +99,15 @@ module Swift
       # iterate through the entire collection.
       def << *list
         @collection ||= []
-        if invalid = list.reject {|scheme| scheme.kind_of?(target)} and !invalid.empty?
-          #raise ArgumentError, "invalid object, expecting #{target.class_name} got #{invalid}"
+        if invalid = list.reject {|scheme| valid_target_instance?(scheme)} and !invalid.empty?
+          raise ArgumentError, "invalid object, expecting #{target.class_name} got #{invalid}"
         end
         @collection += list
+      end
+
+      def valid_target_instance? scheme
+        @chained_target ||= endpoint && target.send(endpoint).send(:target)
+        scheme.kind_of?(target) || (@chained_target && scheme.kind_of?(@chained_target))
       end
 
       def [] n
@@ -182,7 +187,7 @@ module Swift
         __assoc__   = self
         index       = get_association_index(klass)
         name        = options.fetch(:name)
-        index[name] = lambda {__assoc__.new(options.merge(source: klass))}
+        index[name] = proc {__assoc__.new(options.merge(source: klass))}
         set_association_index(klass, index)
       end
 

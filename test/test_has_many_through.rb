@@ -60,4 +60,8 @@ describe 'has_many through relation' do
     assert book.persisted
     assert_equal 'sample store', Book.all('name = ?', 'sample book').stores.first.name
   end
+
+  it 'should raise an exception when passed a wrong type' do
+    assert_raises(ArgumentError) { @book.stores << Book.create(name: 'test book') }
+  end
 end
