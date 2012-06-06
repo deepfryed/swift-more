@@ -1,7 +1,6 @@
 # vim: syntax=ruby
 source :rubygems
 
-# Fork has massive pure Ruby IDNA junk removed.
 gem 'addressable'
 gem 'idn-ruby'
 

@@ -34,8 +34,10 @@ class Runner
   end
 
   def run
-    DataMapper.auto_migrate!
-    yield run_creates
+    if tests.include? :create
+      DataMapper.auto_migrate!
+      yield run_creates
+    end
     yield run_selects
     yield run_updates if tests.include? :update
   end
@@ -44,6 +46,7 @@ class Runner
     Benchmark.run("dm #create") do
       rows.times do |n|
         author = Author.create(name: "author #{n}")
+        100.times do |m|
         author.books << Book.new(name: "book #{n}")
         author.save
       end
@@ -52,7 +55,7 @@ class Runner
 
   def run_selects
     Benchmark.run("dm #select") do
-      runs.times do
+      runs.times do |n|
         Author.all(:id.lt => 5).books.each {|book| book.id }
       end
     end

@@ -40,8 +40,10 @@ class Runner
   end
 
   def run
-    Swift.migrate!
-    yield run_creates
+    if tests.include? :create
+      Swift.migrate!
+      yield run_creates
+    end
     yield run_selects
     yield run_updates if tests.include? :update
   end
@@ -50,7 +52,9 @@ class Runner
     Benchmark.run("swift-m #create") do
       rows.times do |n|
         author = Author.create(name: "author #{n}")
-        author.books << Book.new(name: "book #{n}")
+        100.times do |m|
+          author.books << Book.new(name: "book #{m}")
+        end
         author.save
       end
     end

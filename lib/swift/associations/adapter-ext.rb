@@ -86,7 +86,7 @@ module Swift
 
     def load_through scheme, relationship, extra = ''
       sql, bind = associations.all(relationship)
-      prepare(scheme, sql + extra).execute(*bind)
+      execute(scheme, sql + extra, *bind)
     end
 
     def delete_through scheme, relationship

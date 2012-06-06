@@ -47,7 +47,7 @@ OptionParser.new do |opts|
 end.parse!
 
 args[:script].uniq!
-args[:script] = %w(ar dm sequel swift) if args[:script].empty?
+args[:script] = %w(ar dm swift) if args[:script].empty?
 args[:tests]  = %w(create select update).map(&:to_sym) if args[:tests].empty?
 args[:rows]   = '*' if args[:tests] == [ :select ]
 
@@ -57,13 +57,11 @@ if args[:verbose]
 end
 
 require_relative args[:script].shift
+cli_args = args.map {|arg, value| [ value ].flatten.map {|v| "--#{arg} #{v}"}.join(' ') }.join(' ')
 
 GC.disable
 Runner.new(args).run {|result| puts result.output }
 
 if !args[:script].empty?
-  Kernel.exec(
-    "#{$0} %s --no-verbose" %
-    args.map {|arg, value| [ value ].flatten.map {|v| "--#{arg} #{v}"}.join(' ') }.join(' ')
-  )
+  Kernel.exec "#{$0} %s --no-verbose" % cli_args
 end
