@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 require 'minitest/autorun'
-require 'minitest/pride' if $stdout.tty?
+require 'minitest/pretty'
 
 require 'swift'
 require 'swift/migrations'

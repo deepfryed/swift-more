@@ -46,8 +46,9 @@ class Runner
     Benchmark.run("dm #create") do
       rows.times do |n|
         author = Author.create(name: "author #{n}")
-        100.times do |m|
-        author.books << Book.new(name: "book #{n}")
+        5.times do |m|
+          author.books << Book.new(name: "book #{m}")
+        end
         author.save
       end
     end
@@ -56,7 +57,7 @@ class Runner
   def run_selects
     Benchmark.run("dm #select") do
       runs.times do |n|
-        Author.all(:id.lt => 5).books.each {|book| book.id }
+        Author.all(:id.lt => 100).books.each {|book| book.id }
       end
     end
   end

@@ -39,7 +39,7 @@ class Runner
   end
 
   def migrate!
-    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING")
+    ActiveRecord::Base.connection.execute("set client_min_messages=WARNING") rescue nil
 
     orig_stdout, $stdout = $stdout, StringIO.new
     ActiveRecord::Schema.define do
@@ -62,7 +62,7 @@ class Runner
     Benchmark.run("ar #create") do
       rows.times do |n|
         author = Author.create(name: "author #{n}")
-        100.times do |m|
+        5.times do |m|
           author.books << Book.new(name: "book #{m}")
         end
         author.save
@@ -74,7 +74,7 @@ class Runner
     Benchmark.run("ar #select") do
       runs.times do
         Author.uncached do
-          Author.where("id < 5", include: 'books').map(&:books).flatten.each {|book| book.id}
+          Author.where("id < 100", include: 'books').map(&:books).flatten.each {|book| book.id}
         end
       end
     end

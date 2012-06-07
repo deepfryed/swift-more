@@ -52,7 +52,7 @@ class Runner
     Benchmark.run("swift-m #create") do
       rows.times do |n|
         author = Author.create(name: "author #{n}")
-        100.times do |m|
+        5.times do |m|
           author.books << Book.new(name: "book #{m}")
         end
         author.save
@@ -63,7 +63,7 @@ class Runner
   def run_selects
     Benchmark.run("swift-m #select") do
       runs.times do
-        Author.all(':id < ?', 5).books.each {|book| book.id }
+        Author.all(':id < ?', 100).books.each {|book| book.id }
       end
     end
   end
