@@ -227,12 +227,11 @@ module Swift
         endpoint ? save_through : save_collection
       end
 
-      # TODO very slow, speed it up.
       def save_through
         rel = BelongsTo.get_association_index(target)
         fn1 = rel.find {|k,v| v.call.target == self.source_scheme}[0]
         fn2 = (rel.keys - [fn1])[0]
-        (@collection || []).each {|item| target.new(fn1 => source, fn2 => item).save}
+        (@collection || []).each {|item| target.new(fn1 => source, fn2 => item).save(false)}
       end
 
       def save_collection
@@ -241,7 +240,7 @@ module Swift
           next if item.visited
           target_keys.zip(source_keys).each {|t,s| item.send("#{t}=", source.send(s))}
           # in case the whole thing fails, we will roll back persisted and internal states.
-          item.persisted, discarded_value = item.persisted, item.save
+          item.persisted, discarded_value = item.persisted, item.save(false)
         end
       end
 
@@ -293,7 +292,7 @@ module Swift
 
       def save
         if item = @collection.first
-          item.save if item.new? && !item.visited
+          item.save(false) if item.new? && !item.visited
           target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", item.send(t))}
         else
           target_keys.zip(source_keys).each {|t,s| source.send("#{s}=", nil)}

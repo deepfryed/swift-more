@@ -35,8 +35,10 @@ class Runner
   end
 
   def run
-    Swift.migrate!
-    yield run_creates
+    if tests.include? :create
+      Swift.migrate!
+      yield run_creates
+    end
     yield run_selects
     yield run_updates if tests.include? :update
   end
@@ -46,7 +48,9 @@ class Runner
       rows.times do |n|
         Swift.db.transaction do
           author = Author.create(name: "author #{n}")
-          book   = Book.create(name: "book #{n}", author_id: author.id)
+          5.times do |m|
+            book = Book.create(name: "book #{m}", author_id: author.id)
+          end
         end
       end
     end
@@ -54,7 +58,7 @@ class Runner
 
   def run_selects
     Benchmark.run("swift-v #select") do
-      stmt = Swift.db.prepare(Book, "select b.* from authors a join books b on (a.id = b.author_id) where a.id < 5")
+      stmt = Book.prepare("select b.* from authors a join books b on (a.id = b.author_id) where a.id < 100")
       runs.times do
         stmt.execute {|book| book.id }
       end
@@ -63,7 +67,7 @@ class Runner
 
   def run_updates
     Benchmark.run("swift-v #update") do
-      stmt = Swift.db.prepare(Book, "select b.* from authors a join books b on (a.id = b.author_id) where a.name like ?")
+      stmt = Book.prepare("select b.* from authors a join books b on (a.id = b.author_id) where a.name like ?")
       runs.times do
         stmt.execute('author 1%') do |book|
           book.update(name: 'book')

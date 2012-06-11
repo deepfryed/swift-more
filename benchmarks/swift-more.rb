@@ -51,7 +51,7 @@ class Runner
   def run_creates
     Benchmark.run("swift-m #create") do
       rows.times do |n|
-        author = Author.create(name: "author #{n}")
+        author = Author.new(name: "author #{n}")
         5.times do |m|
           author.books << Book.new(name: "book #{m}")
         end

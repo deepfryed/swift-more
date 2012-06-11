@@ -37,42 +37,46 @@ module Swift
       !persisted
     end
 
-    def save
-      cache = @__rel || {}
+    def save transaction = true
       begin
-        Swift.db.transaction do |db|
-          self.visited = true
-          (cache[:belongsto] || {}).each {|name, rel| rel.save}
-          new? && db.create(scheme, self) || self.update
-          (cache[:hasmany]   || {}).each {|name, rel| rel.save}
-          (cache[:hasone]    || {}).each {|name, rel| rel.save}
-        end
+        transaction ? Swift.db.transaction { _save } : _save
         commit
-      rescue Exception => error
+      rescue Exception => e  # TODO: do we need to trap Exception here ?
         rollback
-        raise error
+        raise e
       end
       self
     end
 
-    # TODO commit and rollback terminology here might be confusing since its
-    #      used in the context of internal states not persisted ones.
-    def commit
-      cache = @__rel || {}
-      (cache[:hasmany] || {}).each {|name, rel| rel.commit}
-      (cache[:hasone]  || {}).each {|name, rel| rel.commit}
-      self.persisted = true
-      self.visited   = false
-    end
+    private
 
-    def rollback
-      cache = @__rel || {}
-      if new? && (serial = scheme.header.serial)
-        tuple[serial] = nil
+      def _save
+        cache = @__rel || {}
+        self.visited = true
+        (cache[:belongsto] || {}).each {|name, rel| rel.save}
+        new? && Swift.db.create(scheme, self) || self.update
+        (cache[:hasmany]   || {}).each {|name, rel| rel.save}
+        (cache[:hasone]    || {}).each {|name, rel| rel.save}
       end
-      (cache[:hasmany] || {}).each {|name, rel| rel.rollback}
-      (cache[:hasone]  || {}).each {|name, rel| rel.rollback}
-      self.visited = false
-    end
+
+      # TODO commit and rollback terminology here might be confusing since its
+      #      used in the context of internal states not persisted ones.
+      def commit
+        cache = @__rel || {}
+        (cache[:hasmany] || {}).each {|name, rel| rel.commit}
+        (cache[:hasone]  || {}).each {|name, rel| rel.commit}
+        self.persisted = true
+        self.visited   = false
+      end
+
+      def rollback
+        cache = @__rel || {}
+        if new? && (serial = scheme.header.serial)
+          tuple[serial] = nil
+        end
+        (cache[:hasmany] || {}).each {|name, rel| rel.rollback}
+        (cache[:hasone]  || {}).each {|name, rel| rel.rollback}
+        self.visited = false
+      end
   end
 end
