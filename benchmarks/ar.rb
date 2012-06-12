@@ -34,7 +34,7 @@ class Runner
       migrate!
       yield run_creates
     end
-    yield run_selects
+    yield run_selects if tests.include? :select
     yield run_updates if tests.include? :update
   end
 
