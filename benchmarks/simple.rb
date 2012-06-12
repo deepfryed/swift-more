@@ -41,13 +41,13 @@ OptionParser.new do |opts|
   opts.on('-v', '--[no-]verbose') do |v|
     args[:verbose] = v
   end
-  opts.on('-s', '--script [ ar, dm, swift-more, swift-vanilla]') do |name|
+  opts.on('-s', '--script [ ar, dm, swift-more]') do |name|
     args[:script] << name
   end
 end.parse!
 
 args[:script].uniq!
-args[:script] = %w(ar dm swift-more swift-vanilla) if args[:script].empty?
+args[:script] = %w(ar dm sequel swift-more swift-vanilla) if args[:script].empty?
 args[:tests]  = %w(create select update).map(&:to_sym) if args[:tests].empty?
 args[:rows]   = '*' if args[:tests] == [ :select ]
 
