@@ -10,8 +10,7 @@ require 'rake/testtask'
 $rootdir = Pathname.new(__FILE__).dirname
 $gemspec = Gem::Specification.new do |s|
   s.name                      = 'swift-more'
-  s.version                   = '0.3.6'
-  s.rubygems_version          = '1.3.7'
+  s.version                   = '0.4.0'
   s.authors                   = ['Bharanee Rathna']
   s.email                     = ['deepfryed@gmail.com']
   s.summary                   = 'Swift ORM extensions.'
@@ -28,7 +27,7 @@ end
 
 desc 'Generate gemspec'
 task :gemspec do 
-  $gemspec.date    = Date.today
+  $gemspec.date = Date.today
   File.open("#{$gemspec.name}.gemspec", 'w') {|fh| fh.write($gemspec.to_ruby)}
 end
 
