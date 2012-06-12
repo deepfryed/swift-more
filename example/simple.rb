@@ -66,3 +66,5 @@ pp author.books('books.id in (1,2)').chapters.map(&:name).uniq  #-> ['The first 
 # Scheme#all is lazy
 pp Author.all('authors.name like ?', 'Dale%').map(&:name)
 pp Author.all('authors.name like ?', 'Dale%').books.map(&:name)
+
+Author.first.books.first.update(name: 'foo')

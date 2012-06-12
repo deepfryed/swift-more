@@ -1,6 +1,8 @@
+require 'zlib'
+
 module Swift
   class Scheme
-    attr_accessor :persisted, :visited
+    attr_accessor :persisted, :visited, :crc
 
     class << self
       alias :class_name :name
@@ -14,38 +16,70 @@ module Swift
       execute("select * from #{self} %s" % (where ? "where #{where}" : ''), *args, &block)
     end
 
-    # TODO wrappers for load & create ?
     def self.load tuple
       scheme           = allocate
       scheme.tuple     = tuple
       scheme.persisted = true
+      scheme.crc       = Hash[tuple.map {|key, value| [key, Zlib.crc32(value.to_s)]}]
       scheme
     end
 
-    def self.create options = {}
-      if options.find {|k,v| v.kind_of?(Scheme) || v.kind_of?(Array)}
-        instance = new(options)
-        instance.save
-        instance
-      elsif instance = Swift.db.create(self, options)
+    def self.create resources = {}
+      instances = []
+      [resources].flatten.each do |resource|
+        # create includes nested associations
+        if resource.find {|k, v| v.kind_of?(Scheme) || (v.kind_of?(Array) && v.first.kind_of?(Scheme))}
+          instance = new(resource)
+          instance.save
+        else
+          instance = resource.kind_of?(Scheme) ? resource : new(resource)
+          Swift.db.create(self, instance)
+        end
+        instance.crc       = Hash[instance.tuple.map {|key, value| [key, Zlib.crc32(value.to_s)]}]
         instance.persisted = true
-        instance
+        instances         << instance
       end
+      instances.size == 1 ? instances.first : instances
     end
 
     def new?
       !persisted
     end
 
+    def dirty?
+      !tuple.find {|key, value| crc[key] != Zlib.crc32(value.to_s)}.empty?
+    end
+
+    def crc
+      @crc ||= {}
+    end
+
+    def dirty_attributes
+      updatable = scheme.header.updatable
+      tuple.select do |key, value|
+        updatable.include?(scheme.send(key).field) && crc[key] != Zlib.crc32(value.to_s)
+      end
+    end
+
     def save transaction = true
       begin
         transaction ? Swift.db.transaction { _save } : _save
         commit
-      rescue Exception => e  # TODO: do we need to trap Exception here ?
+      rescue => e
         rollback
         raise e
       end
       self
+    end
+
+    def update attrs = {}
+      attrs.each {|key, value| self.send("#{key}=", value)}
+      dirty = dirty_attributes
+      return if dirty.empty?
+
+      set   = dirty.keys.map {|key| "#{scheme.send(key).field} = ?"}.join(', ')
+      where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
+      Swift.db.execute("update #{scheme.store} set #{set} where #{where}", *dirty.values, *tuple.values_at(*scheme.header.keys))
     end
 
     private
@@ -59,7 +93,7 @@ module Swift
         (cache[:hasone]    || {}).each {|name, rel| rel.save}
       end
 
-      # TODO commit and rollback terminology here might be confusing since its
+      # NOTE commit and rollback terminology is confusing since its
       #      used in the context of internal states not persisted ones.
       def commit
         cache = @__rel || {}
@@ -78,5 +112,5 @@ module Swift
         (cache[:hasone]  || {}).each {|name, rel| rel.rollback}
         self.visited = false
       end
-  end
-end
+  end # Scheme
+end # Swift
