@@ -12,6 +12,11 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
 * ruby   >= 1.9.1
 * swift  >= 0.14.0
 
+# Features
+
+* Associations: 1:1, 1:N, M:N
+* Dirty attribute tracking for updates
+
 ## Synopsis
 
 ```ruby
@@ -84,6 +89,10 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
 ## N:M relationships
 
 ```ruby
+  require 'swift'
+  require 'swift/migrations'
+  require 'swift-more'
+
   class Store < Swift::Scheme
     store      :stores
     attribute  :id,      Integer, serial: true, key: true
@@ -92,7 +101,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
     has_many :books, through: :stocks
   end
 
-  class Store < Swift::Scheme
+  class Stock < Swift::Scheme
     store      :stocks
     attribute  :id,       Integer, serial: true, key: true
     attribute  :store_id, Integer
@@ -110,25 +119,49 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
     has_many   :stores, through: :stocks
   end
 
+  Swift.setup :default, Swift::DB::Sqlite3, db: ':memory:'
   Swift.migrate!
 
   book = Book.create(name: 'test book')
   book.stores << Store.new(name: 'store 1')
   book.save
-  book.stores.reload.first.name #=> 'store 1'
+  p book.stores.reload.first.name #=> 'store 1'
 
   book = Book.create(name: 'another test book', stores: book.stores.all)
   p book.stores.reload.first.name #=> 'store 1'
 
-  book = Book.create(name: 'third book', stores: [Store.new(name: 'store 2')])
+  book = Book.create(name: 'third book', stores: Store.new(name: 'store 2'))
   p book.stores.reload.first.name #=> 'store 2'
 ```
 
-## Supported association relationships
+## Benchmarks
 
-* has_one
-* has_many
-* belongs_to
+* in-memory sqlite3 database
+* 500 rows mapped to 5 rows each via 1:N association
+
+```
+$ cd benchmarks
+$ ./simple.rb
+
+-- driver: sqlite3 rows: 500 runs: 5 --
+
+benchmark           sys         user        total       real        rss
+ar #create       0.050000    1.400000    1.450000    1.463438    86.19m
+ar #select       0.000000    0.370000    0.370000    0.373881    18.87m
+ar #update       0.030000    0.860000    0.890000    0.894940    65.83m
+
+dm #create       0.060000    1.700000    1.760000    1.766743    138.14m
+dm #select       0.000000    0.310000    0.310000    0.313023    18.48m
+dm #update       0.020000    0.760000    0.780000    0.775961    87.48m
+
+sequel #create   0.050000    1.410000    1.460000    1.462936    89.01m
+sequel #select   0.000000    0.040000    0.040000    0.037952    1.93m
+sequel #update   0.020000    0.200000    0.220000    0.216689    13.54m
+
+swift-m #create  0.000000    0.130000    0.130000    0.133083    10.28m
+swift-m #select  0.000000    0.020000    0.020000    0.023825    3.89m
+swift-m #update  0.010000    0.060000    0.070000    0.072410    6.76m
+```
 
 ## Contributing
 

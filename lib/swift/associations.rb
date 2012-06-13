@@ -119,7 +119,7 @@ module Swift
       end
 
       def replace list
-        @collection = list.flatten.reject(&:nil?).uniq
+        @collection = [list].flatten.reject(&:nil?).uniq
       end
 
       def create attrs
