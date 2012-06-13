@@ -1,4 +1,4 @@
-# I wish we can avoid this somehow :(
+# Allows recursive constant search. A eval() would be simpler but I try to avoid eval()
 class Object
   def const_get_relative name
     klass = self

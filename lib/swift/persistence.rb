@@ -55,9 +55,8 @@ module Swift
     end
 
     def dirty_attributes
-      updatable = scheme.header.updatable
       tuple.select do |key, value|
-        updatable.include?(scheme.send(key).field) && crc[key] != Zlib.crc32(value.to_s)
+        scheme.header.updatable.include?(scheme.send(key).field) && crc[key] != Zlib.crc32(value.to_s)
       end
     end
 
