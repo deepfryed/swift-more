@@ -135,11 +135,6 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
 * Go nuts - there is no style guide, just a spiffy example and a patch will do.
 * Bonus points for pull requests!
 
-## TODO
-
-* No dirty attribute or association tracking yet. A save will either insert or update always.
-* So many other things, raise issues if you need anything although I would prefer pull requests.
-
 ## LICENSE
 [Creative Commons Attribution - CC BY](http://creativecommons.org/licenses/by/3.0)
 
