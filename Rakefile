@@ -21,7 +21,7 @@ $gemspec = Gem::Specification.new do |s|
   s.files                     = Dir.glob(File.dirname(__FILE__) + '/lib/**/*.rb')
   s.files                     = Dir['{ext,test,lib}/**/*.rb'] + %w(README.md)
 
-  s.add_dependency             'swift'
+  s.add_dependency             'swift', '>= 0.14.0'
   s.add_development_dependency 'minitest'
 end
 
