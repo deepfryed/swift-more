@@ -1,43 +1,43 @@
 module Swift
   def self.migrate! name = nil
     db(name).run_migrations do |db|
-      schema.each {|scheme| db.migrate! scheme}
-      schema.each {|scheme| db.migrate_associations! scheme}
+      schema.each {|record| db.migrate! record}
+      schema.each {|record| db.migrate_associations! record}
     end
   end
 
-  class Scheme
+  class Record
     def self.migrate! db = Swift.db, associations=false
       db.migrate! self
       db.migrate_associations!(self) if associations
     end
   end
 
-  # TODO customizable on-delete and on-update actions.
-  class Adapter::Sql
-    def foreign_key_definition source, source_keys, target, target_keys
-      name = "#{source.store}_#{target.store}_#{source_keys.join('_')}_fkey"
-      sql  =<<-SQL
-        alter table #{source.store} add constraint #{name} foreign key(#{source_keys.join(', ')})
-        references #{target.store}(#{target_keys.join(', ')}) on delete cascade on update cascade
-      SQL
-      sql.gsub(/[\r\n]/, ' ').gsub(/ +/, ' ').strip
-    end
+  class Adapter
+    # TODO customizable on-delete and on-update actions.
+    class Sql
+      def foreign_key_definition source, source_keys, target, target_keys
+        name = "#{source.store}_#{target.store}_#{source_keys.join('_')}_fkey"
+        sql  =<<-SQL
+          alter table #{source.store} add constraint #{name} foreign key(#{source_keys.join(', ')})
+          references #{target.store}(#{target_keys.join(', ')}) on delete cascade on update cascade
+        SQL
+        sql.gsub(/[\r\n]/, ' ').gsub(/ +/, ' ').strip
+      end
 
-    def run_migrations &block
-      block.call(self)
-    end
+      def run_migrations &block
+        block.call(self)
+      end
 
-    def migrate_associations! scheme
-      Swift::Associations::BelongsTo.get_association_index(scheme).values.map(&:call).each do |rel|
-        args = [rel.source, rel.source_keys, rel.target, rel.target_keys]
-        [foreign_key_definition(*args)].flatten.each {|sql| execute(sql)}
+      def migrate_associations! record
+        Swift::Associations::BelongsTo.get_association_index(record).values.map(&:call).each do |rel|
+          args = [rel.source, rel.source_keys, rel.target, rel.target_keys]
+          [foreign_key_definition(*args)].flatten.each {|sql| execute(sql)}
+        end
       end
     end
-  end
 
-  module DB
-    class Sqlite3 < Adapter::Sql
+    class Sqlite3 < Sql
       # NOTE no alter table add foreign key support - got to rebuild the table.
       def foreign_key_definition source, source_keys, target, target_keys
 
@@ -53,7 +53,7 @@ module Swift
       end
     end # Sqlite3
 
-    class Mysql < Adapter::Sql
+    class Mysql < Sql
       def run_migrations &block
         execute('set foreign_key_checks = 0')
         block.call(self)

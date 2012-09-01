@@ -5,7 +5,7 @@ describe 'has_many through relation' do
     # testing hack
     [:Store, :Stock, :Book].each {|k| Object.send(:remove_const, k) if Object.const_defined?(k)}
 
-    Store = Class.new(Swift::Scheme) do
+    Store = Class.new(Swift::Record) do
       store      :stores
       attribute  :id,      Integer, serial: true, key: true
       attribute  :name,    String
@@ -13,7 +13,7 @@ describe 'has_many through relation' do
       has_many :books, through: :stocks
     end
 
-    Stock = Class.new(Swift::Scheme) do
+    Stock = Class.new(Swift::Record) do
       store      :stocks
       attribute  :id,       Integer, serial: true, key: true
       attribute  :store_id, Integer
@@ -23,7 +23,7 @@ describe 'has_many through relation' do
       belongs_to :book
     end
 
-    Book = Class.new(Swift::Scheme) do
+    Book = Class.new(Swift::Record) do
       store      :books
       attribute  :id,   Integer, serial: true, key: true
       attribute  :name, String
@@ -62,6 +62,6 @@ describe 'has_many through relation' do
   end
 
   it 'should raise an exception when passed a wrong type' do
-    assert_raises(ArgumentError) { @book.stores << Book.create(name: 'test book') }
+    assert_raises(Swift::ArgumentError) { @book.stores << Book.create(name: 'test book') }
   end
 end

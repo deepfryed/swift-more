@@ -36,13 +36,13 @@ module Swift
       include Chainable
       include Enumerable
 
-      attr_accessor :source, :target, :source_scheme, :source_keys, :target_keys
+      attr_accessor :source, :target, :source_record, :source_keys, :target_keys
       attr_accessor :chains, :conditions, :bind, :ordering, :endpoint, :name
 
       def initialize options
         name           = options.fetch :name
         @source        = options.fetch :source
-        @source_scheme = source.is_a?(Class) && source || source.class
+        @source_record = source.is_a?(Class) && source || source.class
         @target        = name_to_class(options[:target] ||  name)
 
         # optional stuff
@@ -66,12 +66,12 @@ module Swift
 
       def name_to_class name
         klass = name.kind_of?(Class) && name || name.class
-        klass < Swift::Scheme ? klass : const_search(source_scheme, name)
+        klass < Swift::Record ? klass : const_search(source_record, name)
       end
 
-      def const_search scheme, name
+      def const_search record, name
         name = name.kind_of?(Symbol) ? Inflect.singular(name.to_s).capitalize : name.to_s
-        scheme.const_get_recursive(name)
+        record.const_get_recursive(name)
       end
 
       def size
@@ -99,15 +99,15 @@ module Swift
       # iterate through the entire collection.
       def << *list
         @collection ||= []
-        if invalid = list.reject {|scheme| valid_target_instance?(scheme)} and !invalid.empty?
+        if invalid = list.reject {|record| valid_target_instance?(record)} and !invalid.empty?
           raise ArgumentError, "invalid object, expecting #{target.class_name} got #{invalid}"
         end
         @collection += list
       end
 
-      def valid_target_instance? scheme
+      def valid_target_instance? record
         @chained_target ||= endpoint && target.send(endpoint).send(:target)
-        scheme.kind_of?(target) || (@chained_target && scheme.kind_of?(@chained_target))
+        record.kind_of?(target) || (@chained_target && record.kind_of?(@chained_target))
       end
 
       def [] n
@@ -123,7 +123,7 @@ module Swift
       end
 
       def create attrs
-        if source.kind_of?(Swift::Scheme)
+        if source.kind_of?(Swift::Record)
           target.create attrs.merge! Hash[target_keys.zip(source_keys.map{|name| source.send(name)})]
         elsif chains && chains.first
           chains.first.map do |source|
@@ -191,8 +191,8 @@ module Swift
         set_association_index(klass, index)
       end
 
-      def self.scheme_name scheme
-        Inflect.singular scheme.class_name.to_s.split(/::/).last.downcase
+      def self.record_name record
+        Inflect.singular record.class_name.to_s.split(/::/).last.downcase
       end
     end # Base
 
@@ -202,7 +202,7 @@ module Swift
       def initialize options
         super(options)
         @source_keys = options.fetch :source_keys, [:id]
-        @target_keys = options.fetch :target_keys, ["#{Base.scheme_name(source_scheme)}_id"]
+        @target_keys = options.fetch :target_keys, ["#{Base.record_name(source_record)}_id"]
       end
 
       def self.install klass, options
@@ -229,7 +229,7 @@ module Swift
 
       def save_through
         rel = BelongsTo.get_association_index(target)
-        fn1 = rel.find {|k,v| v.call.target == self.source_scheme}[0]
+        fn1 = rel.find {|k,v| v.call.target == self.source_record}[0]
         fn2 = (rel.keys - [fn1])[0]
         (@collection || []).each {|item| target.new(fn1 => source, fn2 => item).save(false)}
       end
@@ -264,7 +264,7 @@ module Swift
       def initialize options
         super(options)
         @target_keys = options.fetch :target_keys, [:id]
-        @source_keys = options.fetch :source_keys, ["#{Base.scheme_name(target)}_id"]
+        @source_keys = options.fetch :source_keys, ["#{Base.record_name(target)}_id"]
       end
 
       def self.install klass, options
@@ -321,32 +321,32 @@ module Swift
     end # HasOne
   end # Associations
 
-  class Scheme
+  class Record
     extend Associations
 
     class LazyAll
-      def self.new scheme, args, &block
+      def self.new record, args, &block
         if block_given?
-          scheme._all(*args, &block)
+          record._all(*args, &block)
         else
           instance = allocate
-          instance.setup(scheme, args)
+          instance.setup(record, args)
           instance
         end
       end
 
-      def setup scheme, args
-        @scheme, @args = scheme, args
+      def setup record, args
+        @record, @args = record, args
         @index = [Associations::HasMany, Associations::HasOne, Associations::BelongsTo].map do |klass|
-          klass.get_association_index(scheme).keys.map(&:to_sym)
+          klass.get_association_index(record).keys.map(&:to_sym)
         end.flatten
       end
 
       def method_missing name, *args, &block
         if @index.include?(name)
-          Associations::HasMany.uncached(@scheme, nil, @args, {target: @scheme, name: nil}).send(name, *args)
+          Associations::HasMany.uncached(@record, nil, @args, {target: @record, name: nil}).send(name, *args)
         else
-          @scheme._all(*@args).send(name, *args, &block)
+          @record._all(*@args).send(name, *args, &block)
         end
       end
     end # LazyAll
@@ -358,5 +358,5 @@ module Swift
         LazyAll.new(self, args, &block)
       end
     end
-  end # Scheme
+  end # Record
 end #Swift

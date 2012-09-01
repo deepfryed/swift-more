@@ -1,7 +1,7 @@
 require 'zlib'
 
 module Swift
-  class Scheme
+  class Record
     attr_accessor :persisted, :visited, :crc
 
     class << self
@@ -17,22 +17,22 @@ module Swift
     end
 
     def self.load tuple
-      scheme           = allocate
-      scheme.tuple     = tuple
-      scheme.persisted = true
-      scheme.crc       = Hash[tuple.map {|key, value| [key, Zlib.crc32(value.to_s)]}]
-      scheme
+      record           = allocate
+      record.tuple     = tuple
+      record.persisted = true
+      record.crc       = Hash[tuple.map {|key, value| [key, Zlib.crc32(value.to_s)]}]
+      record
     end
 
     def self.create resources = {}
       instances = []
       [resources].flatten.each do |resource|
         # create includes nested associations
-        if resource.find {|k, v| v.kind_of?(Scheme) || (v.kind_of?(Array) && v.first.kind_of?(Scheme))}
+        if resource.find {|k, v| v.kind_of?(Record) || (v.kind_of?(Array) && v.first.kind_of?(Record))}
           instance = new(resource)
           instance.save
         else
-          instance = resource.kind_of?(Scheme) ? resource : new(resource)
+          instance = resource.kind_of?(Record) ? resource : new(resource)
           Swift.db.create(self, instance)
         end
         instance.crc       = Hash[instance.tuple.map {|key, value| [key, Zlib.crc32(value.to_s)]}]
@@ -56,7 +56,7 @@ module Swift
 
     def dirty_attributes
       tuple.select do |key, value|
-        scheme.header.updatable.include?(scheme.send(key).field) && crc[key] != Zlib.crc32(value.to_s)
+        record.header.updatable.include?(record.send(key).field) && crc[key] != Zlib.crc32(value.to_s)
       end
     end
 
@@ -76,9 +76,9 @@ module Swift
       dirty = dirty_attributes
       return if dirty.empty?
 
-      set   = dirty.keys.map {|key| "#{scheme.send(key).field} = ?"}.join(', ')
-      where = scheme.header.keys.map{|key| "#{key} = ?"}.join(' and ')
-      Swift.db.execute("update #{scheme.store} set #{set} where #{where}", *dirty.values, *tuple.values_at(*scheme.header.keys))
+      set   = dirty.keys.map {|key| "#{record.send(key).field} = ?"}.join(', ')
+      where = record.header.keys.map{|key| "#{key} = ?"}.join(' and ')
+      Swift.db.execute("update #{record.store} set #{set} where #{where}", *dirty.values, *tuple.values_at(*record.header.keys))
     end
 
     private
@@ -87,7 +87,7 @@ module Swift
         cache = @__rel || {}
         self.visited = true
         (cache[:belongsto] || {}).each {|name, rel| rel.save}
-        new? && Swift.db.create(scheme, self) || self.update
+        new? && Swift.db.create(record, self) || self.update
         (cache[:hasmany]   || {}).each {|name, rel| rel.save}
         (cache[:hasone]    || {}).each {|name, rel| rel.save}
       end
@@ -104,12 +104,12 @@ module Swift
 
       def rollback
         cache = @__rel || {}
-        if new? && (serial = scheme.header.serial)
+        if new? && (serial = record.header.serial)
           tuple[serial] = nil
         end
         (cache[:hasmany] || {}).each {|name, rel| rel.rollback}
         (cache[:hasone]  || {}).each {|name, rel| rel.rollback}
         self.visited = false
       end
-  end # Scheme
+  end # Record
 end # Swift

@@ -5,7 +5,7 @@ describe 'has_one relation' do
     # testing hack
     [:Book, :Author].each {|k| Object.send(:remove_const, k) if Object.const_defined?(k)}
 
-    Book = Class.new(Swift::Scheme) do
+    Book = Class.new(Swift::Record) do
       store      :books
       attribute  :id,           Integer, serial: true, key: true
       attribute  :author_id,    Integer
@@ -13,7 +13,7 @@ describe 'has_one relation' do
       belongs_to :author
     end
 
-    Author = Class.new(Swift::Scheme) do
+    Author = Class.new(Swift::Record) do
       store     :authors
       attribute :id,   Integer, serial: true, key: true
       attribute :name, String

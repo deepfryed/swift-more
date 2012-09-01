@@ -57,21 +57,21 @@ module Swift
           else
             condition = rel.target_keys.zip(rel.source_keys)
             condition = condition.map {|t,s| '%s.%s = %s.%s' % [alias1, t, alias2, s] }.join(' and ')
-            '%s %s join %s %s on (%s)' % [ rel.target.store, alias1, rel.source_scheme.store, alias2, condition ]
+            '%s %s join %s %s on (%s)' % [ rel.target.store, alias1, rel.source_record.store, alias2, condition ]
           end
         end
 
         def join_with rel, alias1, alias2
           condition = rel.target_keys.zip(rel.source_keys)
           condition = condition.map {|t,s| '%s.%s = %s.%s' % [alias1, t, alias2, s] }.join(' and ')
-          '%s %s on (%s)' % [ rel.source_scheme.store, alias2, condition ]
+          '%s %s on (%s)' % [ rel.source_record.store, alias2, condition ]
         end
 
         def conditions rel, alias1, alias2
           bind   = rel.bind
           clause = rel.conditions.map{|c| c.gsub(FIELD_RE){ '%s.%s' % [ alias1, rel.target.send($+).field ] } }
-          if rel.source.kind_of?(Scheme)
-            keys   =  rel.source_scheme.header.keys
+          if rel.source.kind_of?(Record)
+            keys   =  rel.source_record.header.keys
             clause << '(%s)' % keys.map{|k| '%s.%s = ?' % [alias2, k] }.join(' and ')
             bind   += rel.source.tuple.values_at(*keys)
           end
@@ -84,15 +84,15 @@ module Swift
       @associations ||= Associations::SQL.new
     end
 
-    def load_through scheme, relationship, extra = ''
+    def load_through record, relationship, extra = ''
       sql, bind = associations.all(relationship)
-      execute(scheme, sql + extra, *bind)
+      execute(record, sql + extra, *bind)
     end
 
-    def delete_through scheme, relationship
+    def delete_through record, relationship
       target = relationship.target
       if target.header.keys.length > 1
-        self.load_through(scheme, relationship).map(&:delete)
+        self.load_through(record, relationship).map(&:delete)
       else
         key = target.header.keys.first
         sql, bind = associations.all(relationship)

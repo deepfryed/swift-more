@@ -2,7 +2,7 @@ require 'helper'
 
 describe 'LazyAll' do
   before do
-    @user = Class.new(Swift::Scheme) do
+    @user = Class.new(Swift::Record) do
       store      :users
       attribute  :id,      Integer, serial: true, key: true
       attribute  :name,    String
@@ -19,11 +19,11 @@ describe 'LazyAll' do
 
   it 'should yield to given block' do
     results = []
-    @user.all {|r| results << r}
+    @user.all.each {|r| results << r}
     assert_equal 3, results.size
 
     results.clear
-    @user.all('name in (?, ?)', 'foo', 'bar') {|r| results << r}
+    @user.all('name in (?, ?)', 'foo', 'bar').each {|r| results << r}
     assert_equal 2, results.size
 
     results.clear

@@ -1,5 +1,5 @@
 module Swift
-  class Scheme
+  class Record
     class << self
       alias define_attribute attribute
     end

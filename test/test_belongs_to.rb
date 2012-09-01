@@ -5,7 +5,7 @@ describe 'belongs_to relation' do
     # testing hack
     [:Chapter, :Book, :Author].each {|k| Object.send(:remove_const, k) if Object.const_defined?(k)}
 
-    Chapter = Class.new(Swift::Scheme) do
+    Chapter = Class.new(Swift::Record) do
       store      :chapters
       attribute  :id,      Integer, serial: true, key: true
       attribute  :book_id, Integer
@@ -13,7 +13,7 @@ describe 'belongs_to relation' do
       belongs_to :book
     end
 
-    Book = Class.new(Swift::Scheme) do
+    Book = Class.new(Swift::Record) do
       store      :books
       attribute  :id,           Integer, serial: true, key: true
       attribute  :author_id,    Integer
@@ -22,7 +22,7 @@ describe 'belongs_to relation' do
       has_many   :chapters
     end
 
-    Author = Class.new(Swift::Scheme) do
+    Author = Class.new(Swift::Record) do
       store     :authors
       attribute :id,   Integer, serial: true, key: true
       attribute :name, String
