@@ -27,7 +27,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
 
   Swift.setup :default, Swift::DB::Sqlite3, db: ':memory:'
 
-  class Chapter < Swift::Scheme
+  class Chapter < Swift::Record
     store      :chapters
     attribute  :id,      Integer, serial: true, key: true
     attribute  :book_id, Integer
@@ -35,7 +35,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
     belongs_to :book
   end
 
-  class Book < Swift::Scheme
+  class Book < Swift::Record
     store      :books
     attribute  :id,           Integer, serial: true, key: true
     attribute  :author_id,    Integer
@@ -44,7 +44,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
     has_many   :chapters
   end
 
-  class Author < Swift::Scheme
+  class Author < Swift::Record
     store     :authors
     attribute :id,   Integer, serial: true, key: true
     attribute :name, String
@@ -93,7 +93,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
   require 'swift/migrations'
   require 'swift-more'
 
-  class Store < Swift::Scheme
+  class Store < Swift::Record
     store      :stores
     attribute  :id,      Integer, serial: true, key: true
     attribute  :name,    String
@@ -101,7 +101,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
     has_many :books, through: :stocks
   end
 
-  class Stock < Swift::Scheme
+  class Stock < Swift::Record
     store      :stocks
     attribute  :id,       Integer, serial: true, key: true
     attribute  :store_id, Integer
@@ -111,7 +111,7 @@ Experimental extensions to [Swift ORM](https://github.com/shanna/swift).
     belongs_to :book
   end
 
-  class Book < Swift::Scheme
+  class Book < Swift::Record
     store      :books
     attribute  :id,   Integer, serial: true, key: true
     attribute  :name, String
