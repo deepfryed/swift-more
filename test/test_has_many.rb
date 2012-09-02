@@ -10,6 +10,8 @@ describe 'has_many relation' do
       attribute :id,      Integer, serial: true, key: true
       attribute :book_id, Integer
       attribute :name,    String
+
+      belongs_to :book
     end
 
     Book = Class.new(Swift::Record) do
@@ -17,17 +19,21 @@ describe 'has_many relation' do
       attribute :id,           Integer, serial: true, key: true
       attribute :author_id,    Integer
       attribute :name,         String
-      has_many  :chapters
+
+      has_many   :chapters
+      belongs_to :author
     end
 
     Author = Class.new(Swift::Record) do
       store     :authors
       attribute :id,   Integer, serial: true, key: true
       attribute :name, String
+
       has_many  :books
     end
 
-    [Author, Book, Chapter].each {|klass| Swift.db.migrate! klass}
+    [Author, Book, Chapter].each {|klass| klass.migrate! Swift.db}
+
     @author = Author.create(name: 'Test User')
   end
 

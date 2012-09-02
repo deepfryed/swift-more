@@ -10,7 +10,7 @@ require 'rake/testtask'
 $rootdir = Pathname.new(__FILE__).dirname
 $gemspec = Gem::Specification.new do |s|
   s.name                      = 'swift-more'
-  s.version                   = '0.4.0'
+  s.version                   = '0.5.0'
   s.authors                   = ['Bharanee Rathna']
   s.email                     = ['deepfryed@gmail.com']
   s.summary                   = 'Swift ORM extensions.'
